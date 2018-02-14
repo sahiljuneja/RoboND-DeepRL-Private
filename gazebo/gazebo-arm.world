@@ -192,7 +192,93 @@
 			</geometry>
 		</visual>
 		</link>
+        
 
+		<link name="gripper_link">
+			<inertial>
+                <pose>0 0 0 0 0 0</pose>
+                <mass>0.3</mass>
+                <inertia>
+                  <ixx>0.0001</ixx>
+                  <ixy>0</ixy>
+                  <ixz>0</ixz>
+                  <iyy>0.0002</iyy>
+                  <iyz>0</iyz>
+                  <izz>0.0001</izz>
+                </inertia>
+			</inertial>
+			<visual name="gripper_link">
+			    <pose>0 0 0 0 0 0</pose>
+			    <geometry>
+                    <mesh><uri>file://meshes/gripper/gripper_base.dae</uri></mesh>
+			    </geometry>
+			</visual>
+			<collision name="gripper_link">
+			    <pose>0 0 0 0 0 0</pose>
+			    <geometry>
+                    <mesh><uri>file://meshes/gripper/gripper_base.dae</uri></mesh>
+			    </geometry>
+			</collision>
+		  </link>
+		  <link name="right_gripper_finger_link">
+              <inertial>
+                  <pose>0 0 0 0 0 0</pose>
+                  <mass>0.1</mass>
+                  <inertia>
+                    <ixx>0.02</ixx>
+                    <ixy>0</ixy>
+                    <ixz>0</ixz>
+                    <iyy>0.0002</iyy>
+                    <iyz>0</iyz>
+                    <izz>0.0002</izz>
+                  </inertia>
+              </inertial>
+              
+              <visual name="right_gripper">
+			    <pose>0 0 0 0 0 0</pose>
+
+			    <geometry>
+                    
+                    <mesh><uri>file://meshes/gripper/finger_right.dae</uri></mesh>
+
+			    </geometry>
+              </visual>
+              <collision name="right_gripper">
+			    <pose>0 0 0 0 0 0</pose>
+
+			    <geometry>
+                    <mesh><uri>file://meshes/gripper/finger_right.dae</uri></mesh>
+			    </geometry>
+			  </collision>
+		  </link>
+		  <link name="left_gripper_finger_link">
+              <inertial>
+			    <pose>0 0 0 0 0 0</pose>
+
+                <mass>0.1</mass>
+                <inertia>
+                    <ixx>0.002</ixx>
+                    <ixy>0</ixy>
+                    <ixz>0</ixz>
+                    <iyy>0.0002</iyy>
+                    <iyz>0</iyz>
+                    <izz>0.0002</izz>
+                </inertia>
+              </inertial>
+              
+              <visual name="left_gripper">
+              <pose>0 0 0 0 0 0</pose>
+			  <geometry>
+                  <mesh><uri>file://meshes/gripper/finger_left.dae</uri></mesh>
+			  </geometry>
+			</visual>
+			<collision name="left_gripper">
+                <pose>0 0 0 0 0 0</pose>
+			  <geometry>
+                  <mesh><uri>file://meshes/gripper/finger_left.dae</uri></mesh>
+			  </geometry>
+			</collision>
+		  </link>
 		<link name="gripperbase">
 		<pose>0 0 2.38 0 0 0</pose>
 		<inertial>
@@ -398,7 +484,21 @@
 				<xyz>0 1 0</xyz>
 			</axis>
 		</joint>
-		
+		<plugin name="graspPlugin" filename="libgazeboGraspPlugin.so">
+      		<arm>
+        		<arm_name>arm</arm_name>
+        		<palm_link>gripperbase</palm_link>
+        		<gripper_link>gripperright</gripper_link>
+        		<gripper_link>gripperleft</gripper_link>
+      		</arm>
+      		<forces_angle_tolerance>100</forces_angle_tolerance>
+      		<update_rate>4</update_rate>
+      		<grip_count_threshold>4</grip_count_threshold>
+      		<max_grip_count>8</max_grip_count>
+      		<release_tolerance>0.003</release_tolerance>
+      		<disable_collisions_on_attach>false</disable_collisions_on_attach>
+      		<contact_topic>__default_topic__</contact_topic>
+    </plugin>		
 	</model>
 
 
