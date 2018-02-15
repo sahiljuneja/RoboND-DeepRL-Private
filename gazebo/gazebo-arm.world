@@ -222,7 +222,7 @@
 			</collision>
 		  </link>
           <link name="gripperright">
-              <pose>0 0.075 2.46 0 -1.57 0</pose>
+              <pose>0 0.075 2.505 0 -1.57 -3.14</pose>
               <inertial>
                   
                   <mass>0.1</mass>
@@ -254,7 +254,7 @@
 			  </collision>
 		  </link>
           <link name="gripperleft">
-              <pose>0 -0.075 2.46 0 -1.57 0</pose>
+              <pose>0 -0.075 2.505 0 -1.57 -3.14</pose>
               <inertial>
 			    
 
