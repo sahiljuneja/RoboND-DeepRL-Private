@@ -24,7 +24,7 @@ link_directories(${GAZEBO_LIBRARY_DIRS} gazebo-pkgs/gazebo_grasp_plugin/include)
 add_library(gazeboArmPlugin SHARED ArmPlugin.cpp)
 add_library(gazeboPropPlugin SHARED PropPlugin.cpp)
 add_library(gazeboRoverPlugin SHARED RoverPlugin.cpp)
-add_library(gazeboGraspPlugin SHARED gazebo-pkgs/gazebo_grasp_plugin/src/GazeboGraspGripper.cpp)
+add_library(gazeboGraspPlugin SHARED gazebo-pkgs/gazebo_grasp_plugin/src/GazeboGraspFix.cpp gazebo-pkgs/gazebo_grasp_plugin/src/GazeboGraspGripper.cpp)
 
 target_link_libraries(gazeboArmPlugin jetson-reinforcement ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${PROTOBUF_LIBRARIES} pthread)
 target_link_libraries(gazeboPropPlugin jetson-reinforcement ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${PROTOBUF_LIBRARIES} pthread)
