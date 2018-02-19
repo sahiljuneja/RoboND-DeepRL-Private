@@ -369,11 +369,11 @@
 		</joint>
 
 		<joint name="gripperright" type="prismatic">
-            <pose>0 0 -0.05 0 0 0</pose>
+            <pose>0 0 0 0 0 0</pose>
             <parent>gripperbase</parent>
             <child>gripperright</child>
             <axis>
-                <xyz>0 1 0</xyz>
+                <xyz>0 -1 0</xyz>
             
                 <limit>
                     <effort>100</effort>
@@ -388,11 +388,11 @@
 		  </joint>
 
 		<joint name="gripperleft" type="prismatic">
-            <pose>0 0 -0.05 0 0 0</pose>
+            <pose>0 0 0 0 0 0</pose>
             <parent>gripperbase</parent>
             <child>gripperleft</child>
             <axis>
-                <xyz>0 -1 0</xyz>
+                <xyz>0 1 0</xyz>
             
                 <limit>
                     <effort>100</effort>
@@ -418,7 +418,7 @@
 		<plugin name="graspPlugin" filename="libgazeboGraspPlugin.so">
       		<arm>
         		<arm_name>arm</arm_name>
-        		<palm_link>link3</palm_link>
+        		<palm_link>gripperbase</palm_link>
         		<gripper_link>gripperright</gripper_link>
         		<gripper_link>gripperleft</gripper_link>
       		</arm>
