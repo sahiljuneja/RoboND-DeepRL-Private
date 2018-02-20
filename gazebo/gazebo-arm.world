@@ -482,14 +482,14 @@
 	<!--               -->
 	<!-- BOX/COLLISION -->
 	<!--               -->
-	<!--<model name="box">
+	<model name="box">
 		<link name="link">
-		<pose>2.0 2.0 0.5 0 0 0</pose>
+		<pose>0.75 0.75 0 0 0 0</pose>
 		
 		<collision name="box_collision">
 			<geometry>
 				<box>
-					<size>0.45 0.45 0.45</size>
+					<size>0.15 0.15 0.15</size>
 				</box>
 			</geometry>
 		</collision>
@@ -497,7 +497,7 @@
 		<visual name="visual">
 			<geometry>
 				<box>
-					<size>0.45 0.45 0.45</size>
+					<size>0.15 0.15 0.15</size>
 				</box>
 			</geometry>
 			<material>
@@ -517,13 +517,13 @@
 			</contact>
 		</sensor>
 		</link>
-	</model>-->
+	</model>
 
 
 	<!--               -->
 	<!-- BALL/COLLISION -->
 	<!--               -->
-	<model name="ball">
+    <!--<model name="ball">
 		<link name="link">
 		<pose>0.75 0.75 0.0 0 0 0</pose>
 		<collision name="ball_collision">
@@ -559,7 +559,7 @@
 		</link>
 
 		<plugin name="PropPlugin" filename="libgazeboPropPlugin.so" />
-	</model>
+    </model>-->
 
 </world>
 </sdf>

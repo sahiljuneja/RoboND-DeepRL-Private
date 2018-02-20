@@ -23,7 +23,7 @@
 #define INPUT_CHANNELS 3
 
 #define WORLD_NAME "arm_world"
-#define PROP_NAME  "ball"
+#define PROP_NAME  "box"
 #define GRIP_NAME  "gripperright"
 
 #define REWARD_WIN  1000.0f
