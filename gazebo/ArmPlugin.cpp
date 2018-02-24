@@ -512,7 +512,12 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 
 		// if the robot impacts the ground, count it as a loss
 		const math::Box& gripBBox = gripper->GetBoundingBox();
+		const math::Box& gripLBBox = model->GetLink("gripperleft")->GetBoundingBox();
 		const float groundContact = 0.1f;
+		const float propGripRDist = BoxDistance(gripBBox, propBBox);
+		const float propGripLDist = BoxDistance(gripLBBox, propBBox);
+		printf("YOU ARE LOOKING FOR ME: %f, %f\n", propGripRDist, propGripLDist);
+		
 
 		if( gripBBox.min.z <= groundContact || gripBBox.max.z <= groundContact )
 		{
@@ -522,6 +527,13 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 			rewardHistory = REWARD_LOSS;
 			newReward     = true;
 			endEpisode    = true;
+		}
+		else if( propGripRDist < 0.7 && propGripLDist < 0.7)
+		{
+			printf("LOOK OVER HERE!!!");
+			j2_controller->SetJointPosition(this->model->GetJoint("gripperright"), 0.025);
+			j2_controller->SetJointPosition(this->model->GetJoint("gripperleft"),  0.025);
+
 		}
 		else
 		{
