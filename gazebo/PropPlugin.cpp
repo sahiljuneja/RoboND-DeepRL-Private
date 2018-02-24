@@ -131,8 +131,10 @@ void PropPlugin::Randomize()
 
 	math::Pose pose = originalPose;
 
-	pose.pos.x = randf(0.35f, 0.45f);
-	pose.pos.y = randf(-1.5f, 0.2f);
+	pose.pos.x = 0.5f;
+	pose.pos.y = 0.01f;
+//	pose.pos.x = randf(0.35f, 0.45f);
+//	pose.pos.y = randf(-1.5f, 0.2f);
 	pose.pos.z = 0.0f;
 	
 	printf("prop random pos:  %f  %f  %f\n", pose.pos.x, pose.pos.y, pose.pos.z);
