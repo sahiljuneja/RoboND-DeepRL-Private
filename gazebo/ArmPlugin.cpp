@@ -89,7 +89,7 @@ void ArmPlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr /*_sdf*/)
 	printf("ArmPlugin::Load('%s')\n", _parent->GetName().c_str());
 
 	// Create AI agent
-	agent = dqnAgent::Create(INPUT_WIDTH, INPUT_HEIGHT, INPUT_CHANNELS, DOF*2/*+1*/);
+	agent = dqnAgent::Create(INPUT_WIDTH, INPUT_HEIGHT, INPUT_CHANNELS, DOF*2 + 1/*+1*/);
 
 	if( !agent )
 		printf("ArmPlugin - failed to create AI agent\n");
@@ -443,6 +443,21 @@ static float BoxDistance(const math::Box& a, const math::Box& b)
 	return sqrtf(sqrDist);
 }
 
+// compute the distance between two bounding boxes
+static bool isPropInside (const math::Box& a, const math::Box& b, const math::Box& c)
+{
+	float sqrDist = 0;
+
+	if( a.min.x < c.min.x && b.min.x < c.min.x && a.max.y < c.min.y && b.min.y > c.max.y && a.min.z > c.min.z && b.min.z > c.min.z && a.max.z < c.max.z && b.max.z < c.max.z)
+	{
+		return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 
 // called by the world update start event
 void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
@@ -528,10 +543,10 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 			newReward     = true;
 			endEpisode    = true;
 		}
-		else if( propGripRDist < 0.7 && propGripLDist < 0.7)
+		else if( isPropInside(gripLBBox, gripBBox, propBBox))
 		{
-			printf("LOOK OVER HERE!!!");
-			j2_controller->SetJointPosition(this->model->GetJoint("gripperright"), 0.025);
+			printf("PROP INSIDE. ATTEMPTING TO GRASP\n");
+			j2_controller->SetJointPosition(this->model->GetJoint("gripperright"), -0.025);
 			j2_controller->SetJointPosition(this->model->GetJoint("gripperleft"),  0.025);
 
 		}
