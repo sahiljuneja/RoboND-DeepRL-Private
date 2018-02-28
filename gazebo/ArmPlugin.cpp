@@ -458,7 +458,19 @@ static bool isPropInside (const math::Box& a, const math::Box& b, const math::Bo
     }
 }
 
+void attachJoint(PropPlugin* prop, physics::ModelPtr model)
+{
 
+    //physics::JointPtr grasp_joint;
+    //grasp_joint = model->GetWorld()->GetPhysicsEngine()->CreateJoint("fixed", model);
+    //printf(prop->model->GetLink(PROP_NAME)->GetName().c_str());
+    //grasp_joint->Load(model->GetLink(GRIP_NAME), prop->model->GetLink(PROP_NAME), math::Pose());
+    //grasp_joint->Attach(model->GetLink(GRIP_NAME), prop->model->GetLink(PROP_NAME));
+    model->GetJoint("gripperright")->Attach(prop->model->GetLink(PROP_NAME), model->GetLink(GRIP_NAME));
+    //grasp_joint->SetName("grasp_joint");
+    //grasp_joint->Init();
+    printf("ATTACHING! ATTACHING! ATTACHING!\n");
+}
 // called by the world update start event
 void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 {
@@ -556,6 +568,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 
 			printf("distance('%s', '%s') = %f\n", gripper->GetName().c_str(), prop->model->GetName().c_str(), distGoal);
 
+            
 			if( episodeFrames > 1 )
 			{
 				const float distDelta  = lastGoalDistance - distGoal;
@@ -618,6 +631,8 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 			}
 
 			lastGoalDistance = distGoal;
+            attachJoint(prop, model);
+
 		}	
 	}
 
@@ -626,8 +641,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 	{
 		printf("ArmPlugin - issuing reward %f, EOE=%s  %s\n", rewardHistory, endEpisode ? "true" : "false", (rewardHistory > 0.1f) ? "POS+" : (rewardHistory > 0.0f) ? "POS" : (rewardHistory < 0.0f) ? "    NEG" : "       ZERO");
 		agent->NextReward(rewardHistory, endEpisode);
-
-		// reset reward indicator
+        		// reset reward indicator
 		newReward = false;
 
 		// reset for next episode
