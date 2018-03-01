@@ -3,64 +3,62 @@
  */
 
 #include "deepRL.h"
+#include "fruitEnv.h"
+#include "rand.h"
+
+#include "glDisplay.h"
+#include "glTexture.h"
+
+#include "cudaFont.h"
+#include "cudaPlanar.h"
 
 #include <stdlib.h>
-#include <time.h>
+#include <signal.h>
 
-//#define GAME_WIDTH  40
-//#define GAME_HEIGHT 80
-#define GAME_WIDTH  64
-#define GAME_HEIGHT 64
-#define NUM_CHANNELS 1
-#define BALL_SIZE	8
-#define BALL_SIZE2  (BALL_SIZE/2)
-#define PLAY_SIZE   16
-#define PLAY_SIZE2  (PLAY_SIZE/2)
 
-#define GAME_HISTORY 20
+#define EPISODE_MAX_LENGTH 75
+
+#define RENDER_ZOOM 4
+#define NUM_CHANNELS 3
+
+#define GAME_WIDTH 48
+#define GAME_HEIGHT 48
+#define GAME_HISTORY 25
 
 bool gameHistory[GAME_HISTORY];
 int  gameHistoryIdx = 0;
 
 
-enum catchAction
-{
-	ACTION_STAY  = 0,
-	ACTION_LEFT  = 1,
-	ACTION_RIGHT = 2,
-	NUM_ACTIONS
-};
+bool quit_signal = false;
 
-static const char* catchStr( int action )
+void sig_handler(int signo)
 {
-	if( action == 0 )
+	if( signo == SIGINT )
 	{
-		return "STAY";
+		printf("received SIGINT\n");
+		quit_signal = true;
 	}
-	else if( action == 1 )
-	{
-		return "LEFT";
-	}
-	else if( action == 2 )
-	{
-		return "RIGHT";
-	}
-	
-	return "NULL";
-}
-
-static inline int rand_x()
-{
-	return float(rand()) / float(RAND_MAX) * (GAME_WIDTH-1);
 }
 
 
 int main( int argc, char** argv )
 {
-	printf("deepRL-catch\n\n");
-	srand(time(NULL));
-	
+	printf("deepRL-fruit\n\n");
 
+	if( signal(SIGINT, sig_handler) == SIG_ERR )
+		printf("\ncan't catch SIGINT\n");
+
+
+	// create Fruit environment
+	FruitEnv* fruit = FruitEnv::Create(GAME_WIDTH, GAME_HEIGHT, EPISODE_MAX_LENGTH);
+	
+	if( !fruit )
+	{
+		printf("[deepRL]  failed to create FruitEnv instance\n");
+		return 0;
+	}
+	
+	
 	// create reinforcement learner agent in pyTorch
 	dqnAgent* agent = dqnAgent::Create(GAME_WIDTH, GAME_HEIGHT, NUM_CHANNELS, NUM_ACTIONS);
 	
@@ -71,170 +69,142 @@ int main( int argc, char** argv )
 	}
 	
 	// allocate memory for the game input
-	Tensor* input_state = Tensor::Alloc(GAME_WIDTH, GAME_HEIGHT, NUM_CHANNELS);
+	Tensor* input_tensor = Tensor::Alloc(GAME_WIDTH, GAME_HEIGHT, NUM_CHANNELS);
 	
-	if( !input_state )
+	if( !input_tensor )
 	{
 		printf("[deepRL]  failed to allocate input tensor with %ux%xu elements", GAME_WIDTH, GAME_HEIGHT);
 		return 0;
 	}
 	
-	// game state
-	int ball_x = rand_x();
-	int ball_y = GAME_HEIGHT - 1;
-	int play_x = (GAME_WIDTH / 2) + 1;
 	
+	// create openGL display
+	glDisplay* display = glDisplay::Create();
+	glTexture* texture = NULL;
 	
-	// play a match of episodes
-	int episodes_won = 0;
-	int episode = 1;
-	
-	
-	while(true)
+	if( display != NULL )
 	{
-		// update the playing field
-		for( int y=0; y < GAME_HEIGHT; y++ )
-		{
-			for( int x=0; x < GAME_WIDTH; x++ )
-			{
-				float cell_value = 0.0f;
-				
-				if( (x >= ball_x - BALL_SIZE2) && (x <= ball_x + BALL_SIZE2) &&
-				    (y >= ball_y - BALL_SIZE2) && (y <= ball_y + BALL_SIZE2) )
-					cell_value = 1.0f;
-				else if( (x >= play_x - PLAY_SIZE2) && (x <= play_x + PLAY_SIZE2) &&
-					    (y == 0) )
-					cell_value = 100.0f;
-				
-				for( int c=0; c < NUM_CHANNELS; c++ )
-					input_state->cpuPtr[c*GAME_WIDTH*GAME_HEIGHT+y*GAME_WIDTH+x] = cell_value;
-			}
-		}
+		texture = glTexture::Create(GAME_WIDTH, GAME_HEIGHT, GL_RGBA32F_ARB/*GL_RGBA8*/, NULL);
+
+		if( !texture )
+			printf("[deepRL]  failed to create openGL texture\n");
 		
-		// ask the AI agent for their action
-		int action = ACTION_STAY;
+		display->SetTitle("Fruit RL");
+	}
+	else
+		printf("[deepRL]  failed to create openGL display\n");
+	
+	
+	// create font object
+	cudaFont* font = cudaFont::Create();
+	
+	if( !font )
+		printf("failed to create cudaFont object\n");
+
+
+	// global variables for tracking agent progress
+	uint32_t episode_count = 0;
+	uint32_t episode_wins  = 0;
+
+	float reward = 0.0f;
+
+
+	// game loop
+	while( !quit_signal )
+	{
+		// render fruit environment
+		float* imgRGBA = fruit->Render();
 		
-		if( !agent->NextAction(input_state, &action) )
+		if( !imgRGBA )
 		{
-			printf("[deepRL]  agent->NextAction() failed.\n");
+			printf("[deepRL]  failed to render FruitEnv\n");
 			return 0;
 		}
-
-		//printf("RL action: %i %s\n", action, actionStr(action));
 		
-		const int prevDist = abs(play_x - ball_x);
-
-		// apply the agent's action, without going off-screen
-		if( action == ACTION_LEFT && (play_x - PLAY_SIZE2) > 0 )
-			play_x--;
-		else if( action == ACTION_RIGHT && (play_x + PLAY_SIZE2) < (GAME_WIDTH-1) )
-			play_x++;
-		
-		const int currDist = abs(play_x - ball_x);
-		
-		
-		// advance the simulation (make the ball fall)
-		ball_y--;
-
-
-		// print screen
-#if 0
-		printf("\n");
-
-		for( int y=0; y < GAME_HEIGHT; y++ )
+		if( font != NULL )
 		{
-			printf("|");
-			
-			for( int x=0; x < GAME_WIDTH; x++ )
-			{
-				if( x == ball_x && y == ball_y )
-					printf("*");
-				else if( x == play_x && y == 0 )
-					printf("-");
-				else
-					printf(" ");
-			}
-			
-			printf("|\n");
+			/*char str[256];
+			sprintf(str, "%f", reward);
+
+			font->RenderOverlay((float4*)imgRGBA, (float4*)imgRGBA, GAME_WIDTH, GAME_HEIGHT,
+							    str, 0, 0, make_float4(0.0f, 0.75f, 1.0f, 255.0f));*/
 		}
-#endif 
-		
-		// compute reward
-		float reward = 0.0f;
 
-		if( currDist == 0 )
-			reward = 1.0f;
-		else if( currDist > prevDist )
-			reward = -1.0f;
-		else if( currDist < prevDist )
-			reward = 1.0f;
-		else if( currDist == prevDist )
-			reward = 0.0f;
-
-
-		// if the ball has reached the bottom, train & reset randomly
-		bool end_episode = false;
-		
-		if( ball_y <= 0 )
+		// draw environment to display
+		if( display != NULL )
 		{
-			bool ball_overlap = false;
+			display->UserEvents();
+			display->BeginRender();
 
-			// detect if the player paddle is overlapping with the ball
-			for( int i=0; i < BALL_SIZE; i++ )
+			if( texture != NULL )
 			{
-				const int p = ball_x - BALL_SIZE2 + i;
-				
-				if( p >= play_x - PLAY_SIZE2 && p <= play_x + PLAY_SIZE2 )
+				void* imgGL = texture->MapCUDA();
+
+				if( imgGL != NULL )
 				{
-					ball_overlap = true;
-					break;
+					cudaMemcpy(imgGL, imgRGBA, texture->GetSize(), cudaMemcpyDeviceToDevice);
+					CUDA(cudaDeviceSynchronize());
+					texture->Unmap();
 				}
+
+				texture->Render(50, 50, GAME_WIDTH * RENDER_ZOOM, GAME_HEIGHT * RENDER_ZOOM);		
 			}
 
-			// if the agent caught the ball, give it a reward 
-			if( ball_overlap ) 
+			display->EndRender();
+		}
+		
+		// convert from RGBA to pyTorch tensor format (CHW)
+		CUDA(cudaRGBAToPlanarBGR((float4*)imgRGBA, GAME_WIDTH, GAME_HEIGHT,
+							(float*)input_tensor->gpuPtr, GAME_WIDTH, GAME_HEIGHT));
+	
+	
+		// ask the agent for their action
+		int action = 0;	//ACTION_NONE;	//rand(0, NUM_ACTIONS);
+
+		if( !agent->NextAction(input_tensor, &action) )
+			printf("[deepRL]  agent->NextAction() failed.\n");
+
+		if( action < 0 || action >= NUM_ACTIONS )
+			action = ACTION_NONE;
+
+		// provide the agent's action to the environment
+		const bool end_episode = fruit->Action((AgentAction)action, &reward);
+		
+		if( end_episode )
+		{
+			if( reward >= fruit->GetMaxReward() )
 			{
-				reward = 1.0;
-				episodes_won++;
 				gameHistory[gameHistoryIdx] = true;
-				printf("WON! episode %i\n", episode);
+				episode_wins++;
 			}
 			else
-			{
 				gameHistory[gameHistoryIdx] = false;
-				printf("LOST episode %i\n", episode);
-				reward = -1.0f;
-			}
 
-			// print out statistics for tracking agent learning progress
-			printf("%i for %i  (%0.4f)  ", episodes_won, episode, float(episodes_won)/float(episode));
-
-			if( episode >= GAME_HISTORY )
-			{
-				uint32_t historyWins = 0;
-
-				for( uint32_t n=0; n < GAME_HISTORY; n++ )
-				{
-					if( gameHistory[n] )
-						historyWins++;
-				}
-
-				printf("%02u of last %u  (%0.4f)", historyWins, GAME_HISTORY, float(historyWins)/float(GAME_HISTORY));
-			}
-
-			printf("\n");
 			gameHistoryIdx = (gameHistoryIdx + 1) % GAME_HISTORY;
-			episode++;
-
-			// reset the game for next episode
-			ball_x = rand_x();
-			ball_y = GAME_HEIGHT - 1;
-			play_x = (GAME_WIDTH / 2) + 1;
-						
-			// flag as end of episode
-			end_episode = true;
+			episode_count++;
 		}
 
+		printf("action = %s  reward = %0.4f %s wins = %u of %u (%0.4f)   ", 
+			  FruitEnv::ActionToStr((AgentAction)action), 
+			  reward, end_episode ? "EOE" : "  ",  
+			  episode_wins, episode_count, float(episode_wins)/float(episode_count));
+
+		if( episode_count >= GAME_HISTORY )
+		{
+			uint32_t historyWins = 0;
+
+			for( uint32_t n=0; n < GAME_HISTORY; n++ )
+			{
+				if( gameHistory[n] )
+					historyWins++;
+			}
+
+			printf("%02u of last %u  (%0.4f)", historyWins, GAME_HISTORY, float(historyWins)/float(GAME_HISTORY));
+		}
+
+		printf("\n");
+
+		// train the agent with the reward
 		if( !agent->NextReward(reward, end_episode) )
 			printf("[deepRL]  agent->NextReward() failed\n");
 	}

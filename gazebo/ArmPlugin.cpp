@@ -23,13 +23,16 @@
 #define INPUT_CHANNELS 3
 
 #define WORLD_NAME "arm_world"
-#define PROP_NAME  "box"
-#define GRIP_NAME  "gripperright"
+#define PROP_NAME  "tube"
+#define GRIP_NAME  "gripper_middle"
 
 #define REWARD_WIN  1000.0f
 #define REWARD_LOSS -1000.0f
 
 #define COLLISION_FILTER "ground_plane::link::collision"
+
+#define COLLISION_ITEM   "tube::link::tube_collision"
+#define COLLISION_POINT  "arm::gripper_middle::middle_collision"
 
 #define ANIMATION_STEPS 2000
 
@@ -68,7 +71,7 @@ ArmPlugin::ArmPlugin() : ModelPlugin(), cameraNode(new gazebo::transport::Node()
 	inputRawHeight   = 0;
 	actionJointDelta = 0.15f;
 	actionVelDelta   = 0.1f;
-	maxEpisodeLength = 100;
+	maxEpisodeLength = 1000;
 	episodeFrames    = 0;
 
 	newState         = false;
@@ -89,7 +92,7 @@ void ArmPlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr /*_sdf*/)
 	printf("ArmPlugin::Load('%s')\n", _parent->GetName().c_str());
 
 	// Create AI agent
-	agent = dqnAgent::Create(INPUT_WIDTH, INPUT_HEIGHT, INPUT_CHANNELS, DOF*2 + 1/*+1*/);
+	agent = dqnAgent::Create(INPUT_WIDTH, INPUT_HEIGHT, INPUT_CHANNELS, DOF*2/*+1*/);
 
 	if( !agent )
 		printf("ArmPlugin - failed to create AI agent\n");
@@ -202,16 +205,37 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 					 << contacts->contact(i).normal(j).z() << "\n";
 			 std::cout << "   Depth:" << contacts->contact(i).depth(j) << "\n";
 		}
+//		
+//		std::cout << "\n" << contacts->contact(i).collision1().c_str() << "\n" << std::endl;
+//		std::cout << (strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0) << std::endl;	
+//		std::cout << "\n" << contacts->contact(i).collision2().c_str() << "\n" << std::endl;
+//		std::cout << (contacts->contact(i).collision2().c_str() == "arm::gripper_middle::middle_collision") << std::endl;		
+//		std::cout << "\n";
 
 		// issue learning reward
-		if( !testAnimation )
+		//if( !testAnimation 0)
+		if ((strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0) and (strcmp(contacts->contact(i).collision2().c_str(), COLLISION_POINT) == 0 and !testAnimation))
 		{
 			//rewardHistory = (1.0f - (float(episodeFrames) / float(maxEpisodeLength))) * REWARD_WIN;
-			rewardHistory = REWARD_WIN;
+			printf("Give max reward and execute gripper \n");
+			rewardHistory = REWARD_WIN*2;
+			//j2_controller->SetJointPosition(this->model->GetJoint("gripper_right"),  0.5);
+			//j2_controller->SetJointPosition(this->model->GetJoint("gripper_left"),  -0.5);
+
+			//sleep(10)
+            for (int i =0; i< 10; i++)
+                printf("TRYING TO ATTACH THIS \n");
+
+            this->model->GetJoint("gripper_middle")->Attach(GetPropByName(PROP_NAME)->model->GetLink("tube_link"), this->model->GetLink(GRIP_NAME));
 
 			newReward  = true;
 			endEpisode = true;
 		}
+//		else{
+//			rewardHistory = REWARD_LOSS;
+//			newReward  = true;
+//			endEpisode = true;
+//		}
 	}
 }
 
@@ -359,6 +383,7 @@ bool ArmPlugin::updateJoints()
 				ref[n] = JOINT_MIN;
 			else if( ref[n] > JOINT_MAX )
 				ref[n] = JOINT_MAX;
+			
 		}
 
 		animationStep++;
@@ -373,8 +398,12 @@ bool ArmPlugin::updateJoints()
 				testAnimation = false;
 		}
 		else if( animationStep == ANIMATION_STEPS / 2 )
-			RandomizeProps();
-			//ResetPropDynamics();
+			
+			printf("Reset gripper \n");
+			j2_controller->SetJointPosition(this->model->GetJoint("gripper_right"),  0);
+			j2_controller->SetJointPosition(this->model->GetJoint("gripper_left"),  0);
+			//RandomizeProps();
+			ResetPropDynamics();
 
 		return true;
 	}
@@ -443,34 +472,7 @@ static float BoxDistance(const math::Box& a, const math::Box& b)
 	return sqrtf(sqrDist);
 }
 
-// compute the distance between two bounding boxes
-static bool isPropInside (const math::Box& a, const math::Box& b, const math::Box& c)
-{
-	float sqrDist = 0;
 
-	if( a.min.x < c.min.x && b.min.x < c.min.x && a.max.y < c.min.y && b.min.y > c.max.y && a.min.z > c.min.z && b.min.z > c.min.z && a.max.z < c.max.z && b.max.z < c.max.z)
-	{
-		return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-void attachJoint(PropPlugin* prop, physics::ModelPtr model)
-{
-
-    //physics::JointPtr grasp_joint;
-    //grasp_joint = model->GetWorld()->GetPhysicsEngine()->CreateJoint("fixed", model);
-    //printf(prop->model->GetLink(PROP_NAME)->GetName().c_str());
-    //grasp_joint->Load(model->GetLink(GRIP_NAME), prop->model->GetLink(PROP_NAME), math::Pose());
-    //grasp_joint->Attach(model->GetLink(GRIP_NAME), prop->model->GetLink(PROP_NAME));
-    model->GetJoint("gripperright")->Attach(prop->model->GetLink(PROP_NAME), model->GetLink(GRIP_NAME));
-    //grasp_joint->SetName("grasp_joint");
-    //grasp_joint->Init();
-    printf("ATTACHING! ATTACHING! ATTACHING!\n");
-}
 // called by the world update start event
 void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 {
@@ -493,10 +495,19 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 
 		double angle(1);
 		//std::string j2name("joint1");  
-		j2_controller->SetJointPosition(this->model->GetJoint("base"), 	 ref[0]); 
-		j2_controller->SetJointPosition(this->model->GetJoint("joint1"),  ref[1]);
-		j2_controller->SetJointPosition(this->model->GetJoint("joint2"),  ref[2]);
-		j2_controller->SetJointPosition(this->model->GetJoint("joint3"),  ref[3]);
+		j2_controller->SetJointPosition(this->model->GetJoint("base"), 	0);
+		//j2_controller->SetJointPosition(this->model->GetJoint("base"), 	 ref[0]); 
+		j2_controller->SetJointPosition(this->model->GetJoint("joint1"),  ref[0]);
+		j2_controller->SetJointPosition(this->model->GetJoint("joint2"),  ref[1]);
+		j2_controller->SetJointPosition(this->model->GetJoint("joint3"),  ref[2]);
+
+
+//		j2_controller->SetJointPosition(this->model->GetJoint("joint1"),  ref[1]);
+//		j2_controller->SetJointPosition(this->model->GetJoint("joint2"),  ref[2]);
+//		j2_controller->SetJointPosition(this->model->GetJoint("joint3"),  ref[3]);
+
+		//j2_controller->SetJointPosition(this->model->GetJoint("gripper_right"),  1);
+		//j2_controller->SetJointPosition(this->model->GetJoint("gripper_left"),  -1);
 		
 		/*j2_controller->SetJointPosition(this->model->GetJoint("joint4"),  ref[3]);
 		j2_controller->SetJointPosition(this->model->GetJoint("joint5"),  ref[4]);
@@ -539,12 +550,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 
 		// if the robot impacts the ground, count it as a loss
 		const math::Box& gripBBox = gripper->GetBoundingBox();
-		const math::Box& gripLBBox = model->GetLink("gripperleft")->GetBoundingBox();
 		const float groundContact = 0.1f;
-		const float propGripRDist = BoxDistance(gripBBox, propBBox);
-		const float propGripLDist = BoxDistance(gripLBBox, propBBox);
-		printf("YOU ARE LOOKING FOR ME: %f, %f\n", propGripRDist, propGripLDist);
-		
 
 		if( gripBBox.min.z <= groundContact || gripBBox.max.z <= groundContact )
 		{
@@ -555,28 +561,22 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 			newReward     = true;
 			endEpisode    = true;
 		}
-		else if( isPropInside(gripLBBox, gripBBox, propBBox))
-		{
-			printf("PROP INSIDE. ATTEMPTING TO GRASP\n");
-			j2_controller->SetJointPosition(this->model->GetJoint("gripperright"), -0.025);
-			j2_controller->SetJointPosition(this->model->GetJoint("gripperleft"),  0.025);
-
-		}
 		else
 		{
-			const float distGoal = BoxDistance(gripBBox, propBBox); // compute the reward from distance to the goal
+			const float distGoal = BoxDistance(model->GetLink("gripper_middle")->GetBoundingBox(), propBBox); // compute the reward from distance to the goal
 
 			printf("distance('%s', '%s') = %f\n", gripper->GetName().c_str(), prop->model->GetName().c_str(), distGoal);
 
-            
 			if( episodeFrames > 1 )
 			{
 				const float distDelta  = lastGoalDistance - distGoal;
-				const float distThresh = 1.5f;		// maximum distance to the goal
+				const float distThresh = 0.5f;		// maximum distance to the goal
 				const float epsilon    = 0.001f;		// minimum pos/neg change in position
 				const float movingAvg  = 0.9f;
 
-				avgGoalDelta = (avgGoalDelta * movingAvg) + (distDelta * (1.0f - movingAvg));
+				//avgGoalDelta = (avgGoalDelta * movingAvg) + (distDelta * (1.0f - movingAvg));
+
+                avgGoalDelta = exp(-0.25*distDelta);
 		
 				printf("AVG GOAL DELTA  %f\n", avgGoalDelta);
 		
@@ -631,8 +631,6 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 			}
 
 			lastGoalDistance = distGoal;
-            attachJoint(prop, model);
-
 		}	
 	}
 
@@ -641,7 +639,8 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 	{
 		printf("ArmPlugin - issuing reward %f, EOE=%s  %s\n", rewardHistory, endEpisode ? "true" : "false", (rewardHistory > 0.1f) ? "POS+" : (rewardHistory > 0.0f) ? "POS" : (rewardHistory < 0.0f) ? "    NEG" : "       ZERO");
 		agent->NextReward(rewardHistory, endEpisode);
-        		// reset reward indicator
+
+		// reset reward indicator
 		newReward = false;
 
 		// reset for next episode
@@ -653,6 +652,9 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo & /*_info*/)
 			episodeFrames    = 0;
 			lastGoalDistance = 0.0f;
 			avgGoalDelta     = 0.0f;
+//			printf("Reset gripper \n");
+//			j2_controller->SetJointPosition(this->model->GetJoint("gripper_right"),  0);
+//			j2_controller->SetJointPosition(this->model->GetJoint("gripper_left"),  0);
 			// ResetPropDynamics();  // now handled mid-reset sequence
 
 			for( uint32_t n=0; n < DOF; n++ )

@@ -15,11 +15,9 @@ endif()
 if (GAZEBO_FOUND)
 
 message("-- Gazebo7 installation detected, building plugins...")
-#file(GLOB graspInclude gazebo-pkgs/gazebo_grasp_plugin/include/gazebo_grasp_plugin/*.h)
 
 include_directories(${GAZEBO_INCLUDE_DIRS} gazebo-pkgs/gazebo_grasp_plugin/include)
 link_directories(${GAZEBO_LIBRARY_DIRS} gazebo-pkgs/gazebo_grasp_plugin/include)
-
 
 add_library(gazeboArmPlugin SHARED ArmPlugin.cpp)
 add_library(gazeboPropPlugin SHARED PropPlugin.cpp)
@@ -31,7 +29,7 @@ target_link_libraries(gazeboPropPlugin jetson-reinforcement ${GAZEBO_LIBRARIES} 
 target_link_libraries(gazeboRoverPlugin jetson-reinforcement ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${PROTOBUF_LIBRARIES} pthread)
 target_link_libraries(gazeboGraspPlugin jetson-reinforcement ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${PROTOBUF_LIBRARIES} pthread)
 
-# transfer all LUA scripts to bin directory
+# transfer all gazebo scripts to bin directory
 file(GLOB gazeboScripts *.world *.sdf *.sh)
 
 foreach(gazeboScript ${gazeboScripts})
@@ -40,3 +38,7 @@ foreach(gazeboScript ${gazeboScripts})
 endforeach()
 
 endif()
+
+# create symbolic link for meshes
+execute_process( COMMAND "${CMAKE_COMMAND}" "-E" "create_symlink" "${PROJECT_SOURCE_DIR}/gazebo/meshes" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/meshes" )
+

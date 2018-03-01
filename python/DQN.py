@@ -40,6 +40,7 @@ input_height   = args.height
 input_channels = args.channels
 num_actions    = args.actions
 use_rnn		= args.rnn
+allow_random   = True
 
 print('[deepRL]  use_cuda:       ' + str(use_cuda))
 print('[deepRL]  use_rnn:        ' + str(use_rnn))
@@ -257,8 +258,8 @@ def crnn_weights_init(m):
 #    episode.
 #
 
-BATCH_SIZE = 128
-GAMMA = 0.999
+BATCH_SIZE = 32
+GAMMA = 0.9
 EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 200
@@ -283,8 +284,8 @@ def save_model(filename):
 	print('[deepRL]  saving model checkpoint to ' + filename)
 	torch.save(model.state_dict(), filename)
 
-
-optimizer = optim.RMSprop(model.parameters())
+#optimizer = optim.Adam(model.parameters(), lr=0.01)
+optimizer = optim.RMSprop(model.parameters(), lr=0.01)
 memory = ReplayMemory(10000)
 
 steps_done = 0
@@ -301,7 +302,7 @@ def select_action(state, allow_rand):
 		#print('select_action = ' + str(action))
 		return action
 	else:
-		#print('rand range')
+#		print('[deepRL]  DQN selected exploratory random action')
 		return LongTensor([[random.randrange(num_actions)]])
 
 
@@ -346,6 +347,7 @@ def optimize_model():
     non_final_next_states = Variable(torch.cat([s for s in batch.next_state
                                                 if s is not None]),
                                      volatile=True)
+    #print(non_final_next_states)
     state_batch = Variable(torch.cat(batch.state))
     action_batch = Variable(torch.cat(batch.action))
     reward_batch = Variable(torch.cat(batch.reward))
@@ -391,7 +393,7 @@ curr_state = None
 last_diff = None
 curr_diff = None
 
-def next_action(state):
+def next_action(state_in):
 	global last_state
 	global curr_state
 	global last_action
@@ -399,26 +401,28 @@ def next_action(state):
 	global last_diff
 
 	#print('state = ' + str(state.size()))
-	state = state.unsqueeze(0)
-	#print('state = ' + str(state))
+	state = state_in.clone().unsqueeze(0)
 	#print('state = ' + str(state.size()))
+	
+	if curr_state is not None:
+		last_state = curr_state.clone()
 
-	last_state = curr_state
-	last_diff = curr_diff
+	if curr_diff is not None:
+		last_diff = curr_diff.clone()
 
-	curr_state = state
+	curr_state = state.clone()
+
+	last_action = select_action(curr_state, allow_random)
 
 	if last_state is not None:
-		#print('computing diff')
 		curr_diff = state - last_state
-		#curr_state = state - last_state
-		last_action = select_action(curr_diff, False)
+		#print('curr_diff = ' + str(curr_diff.abs().sum()) + ' ' + str(curr_diff.max()) + ' ' + str(curr_diff.min()))
+		#last_action = select_action(curr_diff, allow_random)
+		
 	#else:
 	#	curr_state = None
 	#	curr_diff = None
 	#	last_action = None
-
-	#print('last_action = ' + str(last_action))
 
 	if last_action is not None:
 		#print('ret action = ' + str(last_action[0][0]))
@@ -432,13 +436,18 @@ def next_reward(reward, end_episode):
 	global last_state
 	global curr_state
 	global last_action
+	global curr_diff
+	global last_diff
 	#print('reward = ' + str(reward))
 	reward = Tensor([reward])
 	
-	if last_diff is not None and curr_diff is not None and last_action is not None:
-		#print('storing transition')		
+	if last_diff is not None and curr_diff is not None and last_action is not None:	
 		# store the transition in memory
-		memory.push(last_diff, last_action, curr_diff, reward)
+		#memory.push(last_diff, last_action, curr_diff, reward)
+		memory.push(last_state, last_action, curr_state, reward)
+
+		#if end_episode:
+		#	memory.push(curr_diff, last_action, None, reward)
 
 		# perform one step of optimization on the target network
 		optimize_model()
@@ -447,4 +456,6 @@ def next_reward(reward, end_episode):
 		last_state = None
 		curr_state = None
 		last_action = None
+		curr_diff = None
+		last_diff = None
 
