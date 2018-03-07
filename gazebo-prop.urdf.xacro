@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<robot name="arm" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="tube">
+		<xacro:include filename="$(find robond_rl)/urdf/gazebo_arm.gazebo" />
+		
+		<link name="link">
+			<pose>1 0 0 0 0 0</pose>
+			<inertial>
+			
+				<origin xyz="0.0 0 0" rpy=" 0 0 0"/>
+				<inertia
+					ixx="0.01" ixy="0" ixz="0"
+					iyy="0.01" iyz="0"
+					izz="0.01"
+				/>
+			</inertial>
+			
+			<collision name="tube_collision">
+				<geometry>
+					<cylinder radius="0.05" length=".1"/>
+				</geometry>
+			</collision>
+		
+			<visual>
+				
+				<geometry>
+					<cylinder radius="0.05" length=".1"/>
+				</geometry>
+				
+			</visual>
+
+		</link>
+		<gazebo reference="link">
+			<material>Gazebo/Blue</material>
+			<sensor name='my_contact' type='contact'>
+			<contact>
+				<collision>tube_collision</collision>
+			</contact>
+		</sensor>
+		</gazebo>
+		
+		
+		
+		</link>
+
+	</robot>

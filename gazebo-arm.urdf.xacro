@@ -1,0 +1,279 @@
+<?xml version="1.0"?>
+<robot name="arm" xmlns:xacro="http://www.ros.org/wiki/xacro">
+		<xacro:include filename="$(find robond_rl)/urdf/gazebo_arm.gazebo" />
+
+		<link name="base">
+			<pose>0 0 .1 0 0 0</pose>
+			<inertial>
+				<mass value="10"/>
+				<origin xyz="0.0 0 0" rpy=" 0 0 0"/>
+				<inertia
+					ixx="0.01" ixy="0" ixz="0"
+					iyy="0.01" iyz="0"
+					izz="0.01"
+				/>
+			</inertial>
+			<collision>
+				<geometry>
+					<box size=".4 .4 .2"/>
+				</geometry>
+			</collision>
+		
+			<visual>
+				
+				<geometry>
+					<box size=".4 .4 .2"/>
+				</geometry>
+			</visual>
+
+		</link>
+		
+		<link name="joint1">
+			<pose>0 0 0.3 0 1.5707 1.5707</pose>
+
+			<collision>
+				<geometry>
+					<cylinder radius="0.1" length=".15"/>
+				</geometry>
+			</collision>
+		
+			<visual>
+				
+				<geometry>
+					<cylinder radius="0.1" length=".15"/>
+				</geometry>
+			</visual>
+
+		</link>
+
+		<link name="link1">
+			<pose>0 0 .66 0 0 0</pose>
+			<inertial>
+				<mass value="0.25"/>
+				<origin xyz="0.0 0 0" rpy=" 0 0 0"/>
+				<inertia
+					ixx="0.083" ixy="0" ixz="0"
+					iyy="0.083" iyz="0"
+					izz="0.083"
+				/>
+			</inertial>
+			<collision>
+				<geometry>
+					<box size=".1 .1 .6"/>
+				</geometry>
+			</collision>
+		
+			<visual>
+				
+				<geometry>
+					<box size=".1 .1 .6"/>
+				</geometry>
+			</visual>
+
+		</link>
+
+		<link name="joint2">
+			<pose>0 0 1.01 0 1.5707 1.5707</pose>
+
+			<collision>
+				<geometry>
+					<cylinder radius="0.1" length=".15"/>
+				</geometry>
+			</collision>
+		
+			<visual>
+				
+				<geometry>
+					<cylinder radius="0.1" length=".15"/>
+				</geometry>
+			</visual>
+
+		</link>
+		
+
+		<link name="link2">
+			<pose>0 0 1.37 0 0 0</pose>
+			<inertial>
+				<mass value="0.2"/>
+				<origin xyz="0.0 0 0" rpy=" 0 0 0"/>
+				<inertia
+					ixx="0.083" ixy="0" ixz="0"
+					iyy="0.083" iyz="0"
+					izz="0.083"
+				/>
+			</inertial>
+			<collision>
+				<geometry>
+					<box size=".1 .1 .6"/>
+				</geometry>
+			</collision>
+		
+			<visual>
+				
+				<geometry>
+					<box size=".1 .1 .6"/>
+				</geometry>
+			</visual>
+
+		</link>
+
+		<link name="gripperbase">
+			<pose>0 0 1.68 0 0 0</pose>
+			<inertial>
+			
+			  <mass value="0.3"/>
+			  <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.0001"/>
+			</inertial>
+			<visual>
+			
+			  <geometry>
+				<mesh filename="package://robond_rl/meshes/gripper/gripper_base.dae"/>
+			  </geometry>
+			</visual>
+			<collision>
+			
+			  <geometry>
+				<mesh filename="package://robond_rl/meshes/gripper/gripper_base.dae"/>
+			  </geometry>
+			</collision>
+	  </link>
+	  
+	  <link name="gripper_right">
+		<pose>0 0.075 1.805 0 -1.57 -3.14</pose>
+		<inertial>
+		
+		  <mass value="0.1"/>
+		  <inertia ixx="0.002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.0002"/>
+		</inertial>
+		<visual>
+		  <origin xyz="0 0 0" rpy="0 0 0"/>
+		  <geometry>
+			<mesh filename="package://robond_rl/meshes/gripper/finger_right.dae"/>
+		  </geometry>
+		</visual>
+		<collision>
+		
+		  <geometry>
+			<mesh filename="package://robond_rl/meshes/gripper/finger_right_collision.dae"/>
+		  </geometry>
+		</collision>
+	  </link>
+	  
+	  <link name="gripper_left">
+		<pose>0 -0.075 1.805 0 -1.57 -3.14</pose>
+		<inertial>
+		
+		  <mass value="0.1"/>
+		  <inertia ixx="0.002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.0002"/>
+		</inertial>
+		<visual>
+		
+		  <geometry>
+			<mesh filename="package://robond_rl/meshes/gripper/finger_left.dae"/>
+		  </geometry>
+		</visual>
+		<collision>
+		
+		  <geometry>
+			<mesh filename="package://robond_rl/meshes/gripper/finger_left_collision.dae"/>
+		  </geometry>
+		</collision>
+	  </link>
+        
+	  <link name="gripper_middle">
+		<pose>0 0 1.77 0 0 0</pose>
+		<inertial>
+		
+		  <mass value="0.1"/>
+		  <inertia ixx="0.002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.0002"/>
+		</inertial>
+		<visual>
+		
+		  <geometry>
+			<box size=".01 .01 .07"/>
+			</geometry>
+		</visual>
+		<collision>
+		
+			<geometry>
+				<box size=".01 .01 .07"/>
+			</geometry>
+		</collision>
+	  </link>
+
+
+	  <joint name="base" type="revolute">
+		<parent link="world"/>
+		<child link="base"/>
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<limit upper="2" lower="-2" </>
+		<axis xyz="0 0 1" />
+	  </joint>
+	  
+	  <joint name="joint1" type="revolute">
+		<parent link="base"/>
+		<child link="joint1"/>
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<limit upper="2" lower="-2" </>
+		<axis xyz="0 1 0" />
+	  </joint>
+
+
+	  <joint name="link1-joint1" type="revolute">
+		<parent link="joint1"/>
+		<child link="link1"/>
+		<origin xyz="0 0 -0.05" rpy="0 0 0"/>
+		<limit upper="0" lower="0" </>
+		<axis xyz="0 1 0" />
+	  </joint>
+
+	  <joint name="joint2" type="revolute">
+		<parent link="link1"/>
+		<child link="joint2"/>
+		<origin xyz="0 0 -0.05" rpy="0 0 0"/>
+		<limit upper="2" lower="-2" </>
+		<axis xyz="0 1 0" />
+	  </joint>	
+
+	  <joint name="link2-joint2" type="revolute">
+		<parent link="joint2"/>
+		<child link="link2"/>
+		<origin xyz="0 0 -0.05" rpy="0 0 0"/>
+		<limit upper="0" lower="0" </>
+		<axis xyz="0 1 0" />
+	  </joint>
+
+		<joint name="gripper_right" type="prismatic">
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<parent link="gripperbase" />
+			<child link="gripper_right" />
+			<axis xyz="0 -1 0" />
+			<limit effort="100" lower="-0.01" upper="0.06" velocity="0.05" />
+			<dynamics damping="0.7" />
+	  </joint>
+
+		<joint name="gripper_left" type="prismatic">
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<parent link="gripperbase" />
+			<child link="gripper_left" />
+			<axis xyz="0 1 0" />
+			<limit effort="100" lower="-0.01" upper="0.06" velocity="0.05" />
+			<dynamics damping="0.7" />
+	  </joint>
+
+
+	  <joint name="gripperbase" type="fixed">
+		<parent link="link2"/>
+		<child link="gripperbase"/>
+		<origin xyz="0 0 -0.05" rpy="0 0 0"/>
+		<axis xyz="0 1 0" />
+	  </joint>
+		  
+	  <joint name="gripper_middle" type="fixed">
+		<parent link="gripperbase"/>
+		<child link="gripper_middle"/>
+		<origin xyz="0 0 0 rpy="0 0 0"/>
+		<axis xyz="0 1 0" />
+	  </joint>
+
+	</robot>
