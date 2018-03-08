@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot name="arm" xmlns:xacro="http://www.ros.org/wiki/xacro">
-		<xacro:include filename="$(find robond_rl)/urdf/gazebo_arm.gazebo" />
+		<xacro:include filename="$(find robond-rl)/urdf/gazebo-arm.gazebo" />
 
 		<link name="base">
 			<pose>0 0 .1 0 0 0</pose>
@@ -127,13 +127,13 @@
 			<visual>
 			
 			  <geometry>
-				<mesh filename="package://robond_rl/meshes/gripper/gripper_base.dae"/>
+				<mesh filename="package://robond-rl/meshes/gripper/gripper_base.dae"/>
 			  </geometry>
 			</visual>
 			<collision>
 			
 			  <geometry>
-				<mesh filename="package://robond_rl/meshes/gripper/gripper_base.dae"/>
+				<mesh filename="package://robond-rl/meshes/gripper/gripper_base.dae"/>
 			  </geometry>
 			</collision>
 	  </link>
@@ -148,13 +148,13 @@
 		<visual>
 		  <origin xyz="0 0 0" rpy="0 0 0"/>
 		  <geometry>
-			<mesh filename="package://robond_rl/meshes/gripper/finger_right.dae"/>
+			<mesh filename="package://robond-rl/meshes/gripper/finger_right.dae"/>
 		  </geometry>
 		</visual>
 		<collision>
 		
 		  <geometry>
-			<mesh filename="package://robond_rl/meshes/gripper/finger_right_collision.dae"/>
+			<mesh filename="package://robond-rl/meshes/gripper/finger_right_collision.dae"/>
 		  </geometry>
 		</collision>
 	  </link>
@@ -169,13 +169,13 @@
 		<visual>
 		
 		  <geometry>
-			<mesh filename="package://robond_rl/meshes/gripper/finger_left.dae"/>
+			<mesh filename="package://robond-rl/meshes/gripper/finger_left.dae"/>
 		  </geometry>
 		</visual>
 		<collision>
 		
 		  <geometry>
-			<mesh filename="package://robond_rl/meshes/gripper/finger_left_collision.dae"/>
+			<mesh filename="package://robond-rl/meshes/gripper/finger_left_collision.dae"/>
 		  </geometry>
 		</collision>
 	  </link>
@@ -206,7 +206,7 @@
 		<parent link="world"/>
 		<child link="base"/>
 		<origin xyz="0 0 0" rpy="0 0 0"/>
-		<limit upper="2" lower="-2" </>
+		<limit upper="2" lower="-2" />
 		<axis xyz="0 0 1" />
 	  </joint>
 	  
@@ -214,7 +214,7 @@
 		<parent link="base"/>
 		<child link="joint1"/>
 		<origin xyz="0 0 0" rpy="0 0 0"/>
-		<limit upper="2" lower="-2" </>
+		<limit upper="2" lower="-2" />
 		<axis xyz="0 1 0" />
 	  </joint>
 
@@ -223,7 +223,7 @@
 		<parent link="joint1"/>
 		<child link="link1"/>
 		<origin xyz="0 0 -0.05" rpy="0 0 0"/>
-		<limit upper="0" lower="0" </>
+		<limit upper="0" lower="0" />
 		<axis xyz="0 1 0" />
 	  </joint>
 
@@ -231,7 +231,7 @@
 		<parent link="link1"/>
 		<child link="joint2"/>
 		<origin xyz="0 0 -0.05" rpy="0 0 0"/>
-		<limit upper="2" lower="-2" </>
+		<limit upper="2" lower="-2" />
 		<axis xyz="0 1 0" />
 	  </joint>	
 
@@ -239,7 +239,7 @@
 		<parent link="joint2"/>
 		<child link="link2"/>
 		<origin xyz="0 0 -0.05" rpy="0 0 0"/>
-		<limit upper="0" lower="0" </>
+		<limit upper="0" lower="0" />
 		<axis xyz="0 1 0" />
 	  </joint>
 
@@ -272,7 +272,7 @@
 	  <joint name="gripper_middle" type="fixed">
 		<parent link="gripperbase"/>
 		<child link="gripper_middle"/>
-		<origin xyz="0 0 0 rpy="0 0 0"/>
+		<origin xyz="0 0 0" rpy="0 0 0"/>
 		<axis xyz="0 1 0" />
 	  </joint>
 
