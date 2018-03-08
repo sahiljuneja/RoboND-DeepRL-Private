@@ -214,7 +214,7 @@
 		<parent link="base"/>
 		<child link="joint1"/>
 		<origin xyz="0 0 0" rpy="0 0 0"/>
-		<limit upper="2" lower="-2" />
+		<limit effort="30" velocity="0.017453293*120" upper="2" lower="-2" />
 		<axis xyz="0 1 0" />
 	  </joint>
 
@@ -223,7 +223,7 @@
 		<parent link="joint1"/>
 		<child link="link1"/>
 		<origin xyz="0 0 -0.05" rpy="0 0 0"/>
-		<limit upper="0" lower="0" />
+		<limit effort="30" velocity="0.017453293*120" upper="0" lower="0" />
 		<axis xyz="0 1 0" />
 	  </joint>
 
@@ -231,7 +231,7 @@
 		<parent link="link1"/>
 		<child link="joint2"/>
 		<origin xyz="0 0 -0.05" rpy="0 0 0"/>
-		<limit upper="2" lower="-2" />
+		<limit effort="30" velocity="0.017453293*120" upper="2" lower="-2" />
 		<axis xyz="0 1 0" />
 	  </joint>	
 
@@ -239,7 +239,7 @@
 		<parent link="joint2"/>
 		<child link="link2"/>
 		<origin xyz="0 0 -0.05" rpy="0 0 0"/>
-		<limit upper="0" lower="0" />
+		<limit effort="30" velocity="0.017453293*120" upper="0" lower="0" />
 		<axis xyz="0 1 0" />
 	  </joint>
 
