@@ -57,7 +57,7 @@ public:
 	void onCameraMsg(ConstImageStampedPtr &_msg);
 	void onCollisionMsg(ConstContactsPtr &contacts);
 
-	static const uint32_t DOF = 3;
+	static const uint32_t DOF = 2;
 
 private:
 	float ref[DOF];			// joint reference positions
@@ -84,6 +84,8 @@ private:
 	float    resetPos[DOF];
 	float    lastGoalDistance;
 	float    avgGoalDelta;
+	int	successful_grabs;
+	int	total_runs;
 
 	physics::ModelPtr model;
 	event::ConnectionPtr updateConnection;
