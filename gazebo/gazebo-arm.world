@@ -1,13 +1,28 @@
 <?xml version="1.0" ?>
 <sdf version="1.4">
 <world name="arm_world">
-	<!-- Ground Plane -->>
+	<!--<include>
+		<uri>model://sun</uri>
+	</include>-->
+	<light name='sun' type='directional'>
+		<cast_shadows>1</cast_shadows>
+		<pose>0 0 10 0 -0 0</pose>
+		<diffuse>0.8 0.8 0.8 1</diffuse>
+		<specular>0.2 0.2 0.2 1</specular>
+		<attenuation>
+			<range>1000</range>
+			<constant>0.9</constant>
+			<linear>0.01</linear>
+			<quadratic>0.001</quadratic>
+		</attenuation>
+		<direction>-0.5 0.1 -0.9</direction>
+	</light>
+
+	<!-- Ground Plane -->
 	<include>
 		<uri>model://ground_plane</uri>
 	</include>
-	<include>
-		<uri>model://sun</uri>
-	</include>
+
 
 	<!--             -->
 	<!-- ARM/GRIPPER -->
@@ -310,40 +325,29 @@
 			</axis>
 		</joint>
 
-		<joint name="gripper_right" type="prismatic">
-		<pose>0 0 0 0 0 0</pose>
-		<parent>gripperbase</parent>
-		    <child>gripper_right</child>
-		    <axis>
-			<xyz>0 -1 0</xyz>
-			<limit>
-			    <effort>100</effort>
-			    <lower>-0.01</lower>
-			    <upper>0.06</upper>
-			    <velocity>0.05</velocity>
-			</limit>
-			<dynamics>
-			    <damping>0.7</damping>
-			</dynamics>
-		    </axis>
-			</joint>
-
-		<joint name="gripper_left" type="prismatic">
-            <pose>0 0 0 0 0 0</pose>
-            <parent>gripperbase</parent>
-            <child>gripper_left</child>
-            <axis>
-                <xyz>0 1 0</xyz>
-                <limit>
-                    <effort>100</effort>
-                    <lower>-0.01</lower>
-                    <upper>0.06</upper>
-                    <velocity>0.05</velocity>
-                </limit>
-                <dynamics>
-                    <damping>0.7</damping>
-                </dynamics>
-            </axis>
+		<joint name="gripper_left" type="revolute">
+			<pose>0 0 -0.05 0 0 0</pose>
+			<child>gripper_left</child>
+			<parent>gripperbase</parent>
+			<axis>
+				<limit>
+					<lower>0</lower>
+					<upper>0</upper>
+				</limit>
+				<xyz>0 1 0</xyz>
+			</axis>
+		</joint>
+		<joint name="gripper_right" type="revolute">
+			<pose>0 0 -0.05 0 0 0</pose>
+			<child>gripper_right</child>
+			<parent>gripperbase</parent>
+			<axis>
+				<limit>
+					<lower>0</lower>
+					<upper>0</upper>
+				</limit>
+				<xyz>0 1 0</xyz>
+			</axis>
 		</joint>
 		  
 		<joint name="gripperbase" type="fixed">
@@ -364,7 +368,7 @@
             </axis>
         </joint>
 		 
-		<plugin name="graspPlugin" filename="libgazeboGraspPlugin.so">
+		<!--<plugin name="graspPlugin" filename="libgazeboGraspPlugin.so">
       		<arm>
         		<arm_name>arm</arm_name>
         		<palm_link>gripperbase</palm_link>
@@ -378,7 +382,7 @@
       		<release_tolerance>0.003</release_tolerance>
       		<disable_collisions_on_attach>false</disable_collisions_on_attach>
       		<contact_topic>__default_topic__</contact_topic>
-		</plugin>		
+		</plugin>-->	
 	</model>
 
 
@@ -390,7 +394,7 @@
 		<gravity>false</gravity>
 		<!--<pose>-1.0 -3.0 0.85 0 0 1.0</pose>-->
 		<!--<pose>0.75 -3.0 0.85 0 0 1.5</pose>-->
-		<!--<pose>0.0 0.0 3.5 0 1.57079632679 0</pose>-->
+		<!--pose>0.0 0.0 3.5 0 1.57079632679 0</pose-->
                 <pose>0.5 -3.0 0.85 0 0 1.57</pose>
 		<inertial>
 			<mass>0.1</mass>
@@ -406,18 +410,18 @@
 			<camera>
 				<horizontal_fov>1.047</horizontal_fov>
 				<image>
-					<width>1024</width>
-					<height>1024</height>
+					<width>64</width>
+					<height>64</height>
 				</image>
 				<clip>
 					<near>0.1</near>
 					<far>100</far>
 				</clip>
-				<noise>
+				<!--<noise>
 					<type>gaussian</type>
 					<mean>0.0</mean>
 					<stddev>0.007</stddev>
-				</noise>
+				</noise>-->
 			</camera>
 			<always_on>1</always_on>
 			<update_rate>10</update_rate>
@@ -517,14 +521,14 @@
 	<!-- TUBE/COLLISION -->
 	<!--               -->
 	<model name="tube">
-		<link name="link">
-		<pose>1 0 0 0 0 0</pose>
+		<link name="tube_link">
+		<pose>1.15 0 0 0 0 0</pose>
 		
 		<collision name="tube_collision">
 			<geometry>
 			     <cylinder>
 					<radius>0.05</radius>
-					<length>0.1</length>
+					<length>0.15</length>
 		              </cylinder>
 			</geometry>
 		</collision>
@@ -533,7 +537,7 @@
 			<geometry>
 				<cylinder>
 					<radius>0.05</radius>
-					<length>0.1</length>
+					<length>0.15</length>
 		              </cylinder>
 			</geometry>
 			<material>
@@ -547,16 +551,24 @@
 			</material>
 		</visual>
 
+
 		<sensor name='my_contact' type='contact'>
 			<contact>
 				<collision>tube_collision</collision>
 			</contact>
 		</sensor>
-		</link>
+    </link>
+
+        <joint name="tube_joint" type="fixed">
+			<pose>0 0 0 0 0 0</pose>
+			<child>link</child>
+			<parent>world</parent>
+			<axis>
+				<xyz>0 0 1</xyz>
+			</axis>
+		</joint>
 		<plugin name="PropPlugin" filename="libgazeboPropPlugin.so" />
-
-	</model>-->
-
+	</model>
 
 </world>
 </sdf>
