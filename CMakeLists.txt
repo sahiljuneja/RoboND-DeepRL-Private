@@ -111,7 +111,6 @@ if( ${USE_LUA} )
 		configure_file(${luaScript} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} COPYONLY)
 	endforeach()
 
-	file(COPY lua/DDPG DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 endif()
 
 

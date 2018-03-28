@@ -47,7 +47,7 @@ if [ $BUILD_PYTORCH = "ON" ] || [ $BUILD_PYTORCH = "YES" ] || [ $BUILD_PYTORCH =
 	# pip 9.0.1 from /home/ubuntu/.local/lib/python2.7/site-packages (python 2.7)
 
 	# setproctitle extension used by A3G
-	sudo pip install setproctitle 
+	# sudo pip install setproctitle 
 
 	# install numpy
 	sudo pip install numpy
