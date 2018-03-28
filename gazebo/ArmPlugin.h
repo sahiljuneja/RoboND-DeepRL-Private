@@ -49,15 +49,14 @@ public:
 
 	float resetPosition( uint32_t dof );  // center servo positions
 
+	bool createAgent();
 	bool updateAgent();
 	bool updateJoints();
-	
-	void setAnimationTarget( float x, float y );
 
 	void onCameraMsg(ConstImageStampedPtr &_msg);
 	void onCollisionMsg(ConstContactsPtr &contacts);
 
-	static const uint32_t DOF = 2;
+	static const uint32_t DOF  = 3;	// active degrees of freedom in the arm
 
 private:
 	float ref[DOF];			// joint reference positions
@@ -74,6 +73,7 @@ private:
 	size_t   inputBufferSize;
 	size_t   inputRawWidth;
 	size_t   inputRawHeight;	
+	float    jointRange[DOF][2];	// min/max range of each arm joint
 	float    actionJointDelta;	// amount of offset caused to a joint by an action
 	float    actionVelDelta;		// amount of velocity offset caused to a joint by an action
 	int	    maxEpisodeLength;	// maximum number of frames to win episode (or <= 0 for unlimited)
@@ -84,8 +84,11 @@ private:
 	float    resetPos[DOF];
 	float    lastGoalDistance;
 	float    avgGoalDelta;
-	int	successful_grabs;
-	int	total_runs;
+	int	    successfulGrabs;
+	int	    totalRuns;
+	int      runHistoryIdx;
+	int	    runHistoryMax;
+	bool     runHistory[20];
 
 	physics::ModelPtr model;
 	event::ConnectionPtr updateConnection;

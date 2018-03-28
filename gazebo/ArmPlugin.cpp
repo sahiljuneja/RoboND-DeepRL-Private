@@ -105,8 +105,8 @@ ArmPlugin::ArmPlugin() : ModelPlugin(), cameraNode(new gazebo::transport::Node()
 	animationStep    = 0;
 	lastGoalDistance = 0.0f;
 	avgGoalDelta     = 0.0f;
-	successful_grabs = 0;
-	total_runs       = 0;
+	successfulGrabs = 0;
+	totalRuns       = 0;
 }
 
 
@@ -635,10 +635,10 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 
 			// track the number of wins and agent accuracy
 			if( rewardHistory >= REWARD_WIN )
-				successful_grabs++;
+				successfulGrabs++;
 
-			total_runs++;
-			printf("Current Accuracy:  %0.4f (%03u of %03u)  (reward=%+0.2f %s)\n", float(successful_grabs)/float(total_runs), successful_grabs, total_runs, rewardHistory, (rewardHistory >= REWARD_WIN ? "WIN" : "LOSS"));
+			totalRuns++;
+			printf("Current Accuracy:  %0.4f (%03u of %03u)  (reward=%+0.2f %s)\n", float(successfulGrabs)/float(totalRuns), successfulGrabs, totalRuns, rewardHistory, (rewardHistory >= REWARD_WIN ? "WIN" : "LOSS"));
 
 //			printf("Reset gripper \n");
 //			j2_controller->SetJointPosition(this->model->GetJoint("gripper_right"),  0);
@@ -685,7 +685,7 @@ void IK( float x, float y, float theta[3] )
 }
 
 
-// setAnimationTarget
+/* setAnimationTarget
 void ArmPlugin::setAnimationTarget( float x, float y )
 {
 	IK( x, y, dT );
@@ -698,7 +698,7 @@ void ArmPlugin::setAnimationTarget( float x, float y )
 
 	printf("dT:  %f  %f  %f\n", dT[0], dT[1], dT[2]);
 }
-
+*/
 inline float randf( float rand_min, float rand_max )
 {
 	const float r = float(rand()) / float(RAND_MAX);
