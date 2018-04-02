@@ -3,13 +3,17 @@
  */
 
 #include "deepRL.h"
+#include "commandLine.h"
+#include "rand.h"
 
 #include <stdlib.h>
+#include <signal.h>
 #include <time.h>
 
+
 // Define DQN API settings
-#define GAME_WIDTH   64
-#define GAME_HEIGHT  64
+#define DEFAULT_GAME_WIDTH   64
+#define DEFAULT_GAME_HEIGHT  64
 #define NUM_CHANNELS 1
 #define OPTIMIZER "RMSprop"
 #define LEARNING_RATE 0.01f
@@ -19,12 +23,10 @@
 #define EPS_START 0.9f
 #define EPS_END 0.05f
 #define EPS_DECAY 200
+#define USE_LSTM true
+#define LSTM_SIZE 256
 #define ALLOW_RANDOM true
 #define DEBUG_DQN false
-
-
-// Turn visualization on or off
-#define VISUALIZE false
 
 // Set enviromoment variables
 #define BALL_SIZE	8
@@ -37,8 +39,9 @@
 
 bool gameHistory[GAME_HISTORY];
 int  gameHistoryIdx = 0;
+int  gameHistoryMax = 0;
 
-// Set actions
+// Agent actions
 enum catchAction
 {
 	ACTION_STAY  = 0,
@@ -47,77 +50,88 @@ enum catchAction
 	NUM_ACTIONS
 };
 
-
-// Action choice output function
+// Action enum to string function
 static const char* catchStr( int action )
 {
-	if( action == 0 )
-	{
-		return "STAY";
-	}
-	else if( action == 1 )
-	{
-		return "LEFT";
-	}
-	else if( action == 2 )
-	{
-		return "RIGHT";
-	}
-	
-	return "NULL";
+	if( action == 0 )		return "STAY";
+	else if( action == 1 ) 	return "LEFT";
+	else if( action == 2 )	return "RIGHT";
+	else					return "NULL";
 }
 
-// Generate random x betwenn 0 and GAME_WIDTH-1
-static inline int rand_x()
+bool quit_signal = false;
+
+// Function to catch interupt and quit program
+void sig_handler(int signo)
 {
-	return float(rand()) / float(RAND_MAX) * (GAME_WIDTH-1);
+	if( signo == SIGINT )
+	{
+		printf("received SIGINT\n");
+		quit_signal = true;
+	}
 }
 
 
 int main( int argc, char** argv )
 {
 	printf("deepRL-catch\n\n");
-	srand(time(NULL));
-	
+
+	// Catch quit signal to stop game
+	if( signal(SIGINT, sig_handler) == SIG_ERR )
+		printf("\ncan't catch SIGINT\n");
+
+	// Seed rng
+	srand_time(); 
+
+	// Parse command line
+	commandLine cmdLine(argc, argv);
+
+	const int  gameWidth  = cmdLine.GetInt("width",  DEFAULT_GAME_WIDTH);
+	const int  gameHeight = cmdLine.GetInt("height", DEFAULT_GAME_HEIGHT);
+	const bool render     = cmdLine.GetFlag("render");
+
 
 	// Create reinforcement learner agent in pyTorch using API
-	dqnAgent* agent = dqnAgent::Create(GAME_WIDTH, GAME_HEIGHT, NUM_CHANNELS, NUM_ACTIONS, OPTIMIZER, LEARNING_RATE,
-	REPLAY_MEMORY, BATCH_SIZE, GAMMA, EPS_START, EPS_END, EPS_DECAY, ALLOW_RANDOM, DEBUG_DQN);
+	dqnAgent* agent = dqnAgent::Create(gameWidth, gameHeight, NUM_CHANNELS, NUM_ACTIONS, 
+								OPTIMIZER, LEARNING_RATE, REPLAY_MEMORY, BATCH_SIZE, 
+								GAMMA, EPS_START, EPS_END, EPS_DECAY, 
+								USE_LSTM, LSTM_SIZE, ALLOW_RANDOM, DEBUG_DQN);
 	
-	// Check for agent creation 
+	// Verify agent creation 
 	if( !agent )
 	{
-		printf("[deepRL]  failed to create deepRL instance  %ux%u  %u", GAME_WIDTH, GAME_HEIGHT, NUM_ACTIONS);
+		printf("[deepRL]  failed to create deepRL instance  %ux%u  %u", gameWidth, gameHeight, NUM_ACTIONS);
 		return 0;
 	}
 	
+
 	// Allocate memory for the game input
-	Tensor* input_state = Tensor::Alloc(GAME_WIDTH, GAME_HEIGHT, NUM_CHANNELS);
+	Tensor* input_state = Tensor::Alloc(gameWidth, gameHeight, NUM_CHANNELS);
 	
 	// Check for agent creation
 	if( !input_state )
 	{
-		printf("[deepRL]  failed to allocate input tensor with %ux%xu elements", GAME_WIDTH, GAME_HEIGHT);
+		printf("[deepRL]  failed to allocate input tensor with %ux%xu elements", gameWidth, gameHeight);
 		return 0;
 	}
 	
 	// Setup game state
-	int ball_x = rand_x();
-	int ball_y = GAME_HEIGHT - 1;
-	int play_x = (GAME_WIDTH / 2) + 1;
-	
+	int ball_x = rand(0, gameWidth-1);
+	int ball_y = gameHeight - 1;
+	int play_x = (gameWidth / 2) + 1;	
 	
 	// Set initial state for accuracy
 	int episodes_won = 0;
 	int episode = 1;
-	
-	
-	while(true)
+
+
+	// Game loop
+	while( !quit_signal )
 	{
 		// Update the playing field
-		for( int y=0; y < GAME_HEIGHT; y++ )
+		for( int y=0; y < gameHeight; y++ )
 		{
-			for( int x=0; x < GAME_WIDTH; x++ )
+			for( int x=0; x < gameWidth; x++ )
 			{
 				float cell_value = 0.0f;
 				
@@ -129,7 +143,7 @@ int main( int argc, char** argv )
 					cell_value = 100.0f;
 				
 				for( int c=0; c < NUM_CHANNELS; c++ )
-					input_state->cpuPtr[c*GAME_WIDTH*GAME_HEIGHT+y*GAME_WIDTH+x] = cell_value;
+					input_state->cpuPtr[c*gameWidth*gameHeight+y*gameWidth+x] = cell_value;
 			}
 		}
 		
@@ -150,7 +164,7 @@ int main( int argc, char** argv )
 		// Apply the agent's action, without going off-screen
 		if( action == ACTION_LEFT && (play_x - PLAY_SIZE2) > 0 )
 			play_x--;
-		else if( action == ACTION_RIGHT && (play_x + PLAY_SIZE2) < (GAME_WIDTH-1) )
+		else if( action == ACTION_RIGHT && (play_x + PLAY_SIZE2) < (gameWidth-1) )
 			play_x++;
 		
 		const int currDist = abs(play_x - ball_x);
@@ -159,27 +173,30 @@ int main( int argc, char** argv )
 		// Advance the simulation (make the ball fall)
 		ball_y--;
 
-#if VISUALIZE
-		// print screen		
-		printf("\n");
 
-		for( int y=0; y < GAME_HEIGHT; y++ )
+		// print screen		
+		if( render )
 		{
-			printf("|");
-			
-			for( int x=0; x < GAME_WIDTH; x++ )
+			printf("\n");
+
+			for( int y=0; y < gameHeight; y++ )
 			{
-				if( x == ball_x && y == ball_y )
-					printf("*");
-				else if( x == play_x && y == 0 )
-					printf("-");
-				else
-					printf(" ");
-			}
+				printf("|");
 			
-			printf("|\n");
+				for( int x=0; x < gameWidth; x++ )
+				{
+					if( x == ball_x && y == ball_y )
+						printf("*");
+					else if( x == play_x && y == 0 )
+						printf("-");
+					else
+						printf(" ");
+				}
+			
+				printf("|\n");
+			}
 		}
-#endif 
+
 		
 		// Compute reward
 		float reward = 0.0f;
@@ -230,7 +247,7 @@ int main( int argc, char** argv )
 			}
 
 			// Print out statistics for tracking agent learning progress
-			printf("%i for %i  (%0.4f)  ", episodes_won, episode, float(episodes_won)/float(episode));
+			printf("%03i for %03i  (%0.4f)  ", episodes_won, episode, float(episodes_won)/float(episode));
 
 			if( episode >= GAME_HISTORY )
 			{
@@ -242,7 +259,10 @@ int main( int argc, char** argv )
 						historyWins++;
 				}
 
-				printf("%02u of last %u  (%0.4f)", historyWins, GAME_HISTORY, float(historyWins)/float(GAME_HISTORY));
+				if( historyWins > gameHistoryMax )
+					gameHistoryMax = historyWins;
+
+				printf("%02u of last %u  (%0.2f)  (max=%0.2f)", historyWins, GAME_HISTORY, float(historyWins)/float(GAME_HISTORY), float(gameHistoryMax)/float(GAME_HISTORY));
 			}
 
 			printf("\n");
@@ -250,9 +270,9 @@ int main( int argc, char** argv )
 			episode++;
 
 			// Reset the game for next episode
-			ball_x = rand_x();
-			ball_y = GAME_HEIGHT - 1;
-			play_x = (GAME_WIDTH / 2) + 1;
+			ball_x = rand(0, gameWidth-1);
+			ball_y = gameHeight - 1;
+			play_x = (gameWidth / 2) + 1;
 						
 			// Flag as end of episode
 			end_episode = true;
