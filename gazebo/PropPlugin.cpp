@@ -1,7 +1,3 @@
-/*
- * http://github.com/dusty-nv/jetson-reinforcement
- */
-
 #include "PropPlugin.h"
 
 
@@ -9,7 +5,7 @@ namespace gazebo
 {
 
 // Register this plugin with the simulator
-GZ_REGISTER_MODEL_PLUGIN(PropPlugin)
+GZ_REGISTER_MODEL_PLUGIN(PropPlugin)	
 
 //---------------------------------------------------------------------------------------
 std::vector<PropPlugin*> props;

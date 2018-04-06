@@ -1,7 +1,3 @@
-/* 
- * http://github.com/dusty-nv/jetson-reinforcement
- */
-
 #include "ArmPlugin.h"
 #include "PropPlugin.h"
 
@@ -48,7 +44,6 @@
 // Define Collision Parameters
 #define COLLISION_FILTER "ground_plane::link::collision"
 #define COLLISION_ITEM   "tube::link::tube_collision"
-//#define COLLISION_POINT  "arm::gripper_middle::middle_collision"
 #define COLLISION_POINT  "arm::gripperbase::gripper_link"
 
 // Animation Steps
@@ -121,11 +116,23 @@ void ArmPlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr /*_sdf*/)
 
 	// Create our node for camera communication
 	cameraNode->Init();
-	cameraSub = cameraNode->Subscribe("/gazebo/" WORLD_NAME "/camera/link/camera/image", &ArmPlugin::onCameraMsg, this);
+	
+	/*
+	/ TODO - Subscribe to camera topic
+	/
+	*/
+	
+	cameraSub = None;
 
 	// Create our node for collision detection
 	collisionNode->Init();
-	collisionSub = collisionNode->Subscribe("/gazebo/" WORLD_NAME "/" PROP_NAME "/link/my_contact", &ArmPlugin::onCollisionMsg, this);
+		
+	/*
+	/ TODO - Subscribe to prop collision topic
+	/
+	*/
+	
+	collisionSub = None
 
 	// Listen to the update event. This event is broadcast every simulation iteration.
 	this->updateConnection = event::Events::ConnectWorldUpdateBegin(boost::bind(&ArmPlugin::OnUpdate, this, _1));
@@ -138,11 +145,13 @@ bool ArmPlugin::createAgent()
 	if( agent != NULL )
 		return true;
 
-	// Create DQN agent
-	agent = dqnAgent::Create(INPUT_WIDTH, INPUT_HEIGHT, INPUT_CHANNELS, DOF*2, 
-						OPTIMIZER, LEARNING_RATE, REPLAY_MEMORY, BATCH_SIZE,
-						GAMMA, EPS_START, EPS_END, EPS_DECAY, 
-						USE_LSTM, LSTM_SIZE, ALLOW_RANDOM, DEBUG_DQN);
+			
+	/*
+	/ TODO - Create DQN Agent
+	/
+	*/
+	
+	agent = None;
 
 	if( !agent )
 	{
@@ -151,6 +160,7 @@ bool ArmPlugin::createAgent()
 	}
 
 	// Allocate the python tensor for passing the camera state
+		
 	inputState = Tensor::Alloc(INPUT_WIDTH, INPUT_HEIGHT, INPUT_CHANNELS);
 
 	if( !inputState )
@@ -179,6 +189,7 @@ void ArmPlugin::onCameraMsg(ConstImageStampedPtr &_msg)
 	}
 
 	// retrieve image dimensions
+	
 	const int width  = _msg->image().width();
 	const int height = _msg->image().height();
 	const int bpp    = (_msg->image().step() / _msg->image().width()) * 8;	// bits per pixel
@@ -230,39 +241,30 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 		if(DEBUG){std::cout << "Collision between[" << contacts->contact(i).collision1()
 			     << "] and [" << contacts->contact(i).collision2() << "]\n";}
 
-
-		// Check if there is collision between middle prong and object then issue learning reward
-		if ((strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0) && strcmp(contacts->contact(i).collision2().c_str(), COLLISION_POINT) == 0)
-		//if((strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0))		
+	
+		/*
+		/ TODO - Check if there is collision between the arm and object, then issue learning reward
+		/
+		*/
+			
+		
+		if((strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0))		
        
 		{
-			if(DEBUG)
-				printf("Give max reward and execute gripper \n");
 
-			//rewardHistory = (1.0f - (float(episodeFrames) / float(maxEpisodeLength))) * REWARD_WIN;
-			rewardHistory = REWARD_WIN;
+			rewardHistory = None;
 
-			// Set gripper
-			//j2_controller->SetJointPosition(this->model->GetJoint("gripper_right"),  0.5);
-			//j2_controller->SetJointPosition(this->model->GetJoint("gripper_left"),  -0.5);
-            for (int i =0; i< 10; i++)
-                printf("TRYING TO ATTACH THIS \n");
+			newReward  = None;
+			endEpisode = None;
 
-            this->model->GetJoint("tube_joint")->Attach(this->model->GetLink(GRIP_NAME),GetPropByName(PROP_NAME)->model->GetLink("tube_link"));
-
-			//sleep(10);
-		
-			newReward  = true;
-			endEpisode = true;
-
-			return;	// multiple collisions in the for loop above could mess with win count 
+			return;
 		}
 		else {
+			
 			// Give penalty for non correct collisions
-//			rewardHistory = 0.1 * REWARD_LOSS;
-			rewardHistory = REWARD_LOSS;
-			newReward  = true;
-			endEpisode = true;
+			rewardHistory = None;
+			newReward  = None;
+			endEpisode = None;
 		}
 	}
 }
@@ -299,18 +301,19 @@ bool ArmPlugin::updateAgent()
 
 	if(DEBUG){printf("ArmPlugin - agent selected action %i\n", action);}
 
-	// action 0 does nothing, the others index a joint
-	/*if( action == 0 )
-		return false;	// not an error, but didn't cause an update
-	
-	action--;*/	// with action 0 = no-op, index 1 should map to joint 0
 
 
 #if VELOCITY_CONTROL
 	// if the action is even, increase the joint position by the delta parameter
 	// if the action is odd,  decrease the joint position by the delta parameter
 
-	float velocity = vel[action/2] + actionVelDelta * ((action % 2 == 0) ? 1.0f : -1.0f);
+		
+	/*
+	/ TODO - Increase or decrease the joint velocity based on whether the action is even or add
+	/
+	*/
+	
+	float velocity = 0.0;
 
 	if( velocity < VELOCITY_MIN )
 		velocity = VELOCITY_MIN;
@@ -336,7 +339,12 @@ bool ArmPlugin::updateAgent()
 		}
 	}
 #else
-	float joint = ref[action/2] + actionJointDelta * ((action % 2 == 0) ? 1.0f : -1.0f);
+	
+	/*
+	/ TODO - Increase or decrease the joint position based on whether the action is even or add
+	/
+	*/
+	float joint = 0.0;
 
 	// limit the joint to the specified range
 	if( joint < JOINT_MIN )
@@ -364,11 +372,6 @@ bool ArmPlugin::updateJoints()
 		// range of motion
 		if( animationStep < ANIMATION_STEPS )
 		{
-			//for( uint32_t n=0; n < DOF; n++ )
-			/*ref[0] += dT[0];
-			ref[1] += dT[1];	//ref[4] += dT[1];
-			ref[2] += dT[2];	//ref[8] += dT[2];*/
-
 			animationStep++;
 			printf("animation step %u\n", animationStep);
 
@@ -376,11 +379,7 @@ bool ArmPlugin::updateJoints()
 				ref[n] = JOINT_MIN + step * float(animationStep);
 		}
 		else if( animationStep < ANIMATION_STEPS * 2 )
-		{r
-			/*ref[0] -= dT[0];
-			ref[1] -= dT[1];
-			ref[2] -= dT[2];*/
-
+		{			
 			animationStep++;
 			printf("animation step %u\n", animationStep);
 
@@ -391,22 +390,13 @@ bool ArmPlugin::updateJoints()
 		{
 			animationStep = 0;
 
-			//const float r = float(rand()) / float(RAND_MAX);
-			//setAnimationTarget( 10000.0f, 0.0f );
 		}
 
 #else
 		// return to base position
 		for( uint32_t n=0; n < DOF; n++ )
 		{
-			/*float diff = ref[n] - resetPos[n];
-
-			if( diff < 0.0f )
-				diff = -diff;
-
-			if( diff < step )
-				step = diff;*/
-
+			
 			if( ref[n] < resetPos[n] )
 				ref[n] += step;
 			else if( ref[n] > resetPos[n] )
@@ -432,10 +422,6 @@ bool ArmPlugin::updateJoints()
 		}
 		else if( animationStep == ANIMATION_STEPS / 2 )
 		{	
-			//printf("Reset gripper \n");
-			//j2_controller->SetJointPosition(this->model->GetJoint("gripper_right"),  0);
-			//j2_controller->SetJointPosition(this->model->GetJoint("gripper_left"),  0);
-//			RandomizeProps();
 			ResetPropDynamics();
 		}
 
@@ -529,10 +515,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 	// update the robot positions with vision/DQN
 	if( updateJoints() )
 	{
-		//printf("%f  %f  %f  %s\n", ref[0], ref[1], ref[2], testAnimation ? "(testAnimation)" : "(agent)");
-
 		double angle(1);
-		//std::string j2name("joint1");  
 
 #if LOCKBASE
 		j2_controller->SetJointPosition(this->model->GetJoint("base"), 	0);
@@ -550,8 +533,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 	if( maxEpisodeLength > 0 && episodeFrames > maxEpisodeLength )
 	{
 		printf("ArmPlugin - triggering EOE, episode has exceeded %i frames\n", maxEpisodeLength);
-		rewardHistory = REWARD_LOSS;//0;
-//		rewardHistory = 0.1 * REWARD_LOSS;
+		rewardHistory = REWARD_LOSS;
 		newReward     = true;
 		endEpisode    = true;
 	}
@@ -577,18 +559,23 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 			return;
 		}
 
-		// if the robot impacts the ground, count it as a loss
+						
 		const math::Box& gripBBox = gripper->GetBoundingBox();
 		const float groundContact = 0.05f;
 
 		if( gripBBox.min.z <= groundContact || gripBBox.max.z <= groundContact )
 		{
-			//for( uint32_t n=0; n < 10; n++ )
-				printf("GROUND CONTACT, EOE\n");
+			
+			/*
+			/ TODO - set appropriate Reward for robot hitting the ground.
+			/
+			*/
+			
+			if(DEBUG){printf("GROUND CONTACT, EOE\n");}
 
-			rewardHistory = REWARD_LOSS;
-			newReward     = true;
-			endEpisode    = true;
+			rewardHistory = None;
+			newReward     = None;
+			endEpisode    = None;
 		}
 		else
 		{
@@ -596,7 +583,11 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 
 			if(DEBUG){printf("distance('%s', '%s') = %f\n", gripper->GetName().c_str(), prop->model->GetName().c_str(), distGoal);}
 
-			// issue an interim reward based on the delta of the distance to the object
+			
+			/*
+			/ TODO - Issue an interim reward based on the delta of the distance to the object
+			/
+			*/ 
 			if( episodeFrames > 1 )
 			{
 				const float distDelta  = lastGoalDistance - distGoal;
@@ -605,8 +596,8 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 				const float movingAvg  = 0.9f;
 
 				// compute the smoothed moving average of the delta of the distance to the goal
-				avgGoalDelta  = (avgGoalDelta * movingAvg) + (distDelta * (1.0f - movingAvg));
-				rewardHistory = avgGoalDelta;	// exp(-GAMMA_FALLOFF * distGoal) * 0.1f;
+				avgGoalDelta  = 0.0;
+				rewardHistory = avgGoalDelta;
 				newReward     = true;	
 			}
 
@@ -640,69 +631,11 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 			totalRuns++;
 			printf("Current Accuracy:  %0.4f (%03u of %03u)  (reward=%+0.2f %s)\n", float(successfulGrabs)/float(totalRuns), successfulGrabs, totalRuns, rewardHistory, (rewardHistory >= REWARD_WIN ? "WIN" : "LOSS"));
 
-//			printf("Reset gripper \n");
-//			j2_controller->SetJointPosition(this->model->GetJoint("gripper_right"),  0);
-//			j2_controller->SetJointPosition(this->model->GetJoint("gripper_left"),  0);
-//			ResetPropDynamics();  // now handled mid-reset sequence
 
 			for( uint32_t n=0; n < DOF; n++ )
 				vel[n] = 0.0f;
 		}
 	}
-}
-
-
-// Inverse kinematics solver
-void IK( float x, float y, float theta[3] )
-{
-	const float l1 = 4000.0f;
-	const float l2 = 4000.0f;
-	const float l3 = 1000.0f;
-
-	const float phi = 0.0f;
-
-	const float xw = x - l3 * cosf(0.0f);
-	const float yw = y - l3 * sinf(0.0f);
-
-	const float l12 = l1 * l1;
-	const float l22 = l2 * l2;
-
-	const float xw2 = xw * xw;
-	const float yw2 = yw * yw;
-
-	if( xw == 0.0f && yw == 0.0f )
-	{
-		theta[0] = 0.0f;
-		theta[1] = 0.0f;
-		theta[2] = 0.0f;
-	}
-	else
-	{
-		theta[1] = PI - acosf((l12+l22-xw2-yw2)/(2*l1*l2));
-		theta[0] = atanf(yw/xw) - acosf((l12-l22+xw2+yw2)/(2*l1*sqrtf(xw2+yw2)));
-		theta[2] = phi - theta[1] - theta[0];
-	}
-}
-
-
-/* setAnimationTarget
-void ArmPlugin::setAnimationTarget( float x, float y )
-{
-	IK( x, y, dT );
-
-	printf("theta:  %f  %f  %f\n", dT[0], dT[1], dT[2]);
-	
-	dT[0] /= float(ANIMATION_STEPS);
-	dT[1] /= float(ANIMATION_STEPS);
-	dT[2] /= float(ANIMATION_STEPS);
-
-	printf("dT:  %f  %f  %f\n", dT[0], dT[1], dT[2]);
-}
-*/
-inline float randf( float rand_min, float rand_max )
-{
-	const float r = float(rand()) / float(RAND_MAX);
-	return (r * (rand_max - rand_min)) + rand_min;
 }
 
 }
