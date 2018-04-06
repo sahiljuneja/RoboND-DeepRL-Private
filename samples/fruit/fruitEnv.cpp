@@ -210,10 +210,7 @@ bool FruitEnv::Action( AgentAction action, float* reward )
 
 		return true;
 	}
-   
-	//printf("fruit agent:  action %i - location %f %f - heading %f - velocity %f\n",
-	//	   (int)action, agentX, agentY, agentDir, agentVel );
-		
+ 
 
 	// Check if agent has reached a goal
 	const uint32_t numFruit = fruitObjects.size();
@@ -249,14 +246,9 @@ bool FruitEnv::Action( AgentAction action, float* reward )
 		fruitObject* closestFruit = findClosest(&fruitDistSq);
 
 		if( reward != NULL )
-			//*reward = (lastDistanceSq > fruitDistSq) ? 1.0f : 0.0f;
-			//*reward = (sqrtf(lastDistanceSq) - sqrtf(fruitDistSq)) * 0.5f;
-			//*reward = (1.0f - (fruitDistSq / spawnDistanceSq)) * 0.1f;
+			
 			*reward = (sqrtf(lastDistanceSq) - sqrtf(fruitDistSq)) * 0.35f;
-			//*reward = 1.0f - (1.0f/(1.0f + (fruitDistSq / float(worldWidth*worldWidth))));
-			//*reward = exp(-(fruitDistSq/worldWidth/1.5f));
-			//*reward = (exp(fruitDistSq)-1.0f)/sqrtf(pow(worldWidth,2));
-
+			
 		lastDistanceSq = fruitDistSq;
 	}
 
@@ -385,8 +377,6 @@ void FruitEnv::Reset()
 
 	// Reset agent position
 	randomize_pos(&agentX, &agentY);
-	//agentX = float(worldWidth) * 0.5f;
-	//agentY = float(worldHeight) * 0.5f;
 
 	// Check if there happen to be random overlap
 	for( uint32_t n=0; n < numFruit; n++ )
@@ -395,5 +385,4 @@ void FruitEnv::Reset()
 
 	findClosest(&lastDistanceSq);
 	spawnDistanceSq = lastDistanceSq;
-	//printf("RESET -- lastDistanceSq = %f\n", lastDistanceSq);
 }
