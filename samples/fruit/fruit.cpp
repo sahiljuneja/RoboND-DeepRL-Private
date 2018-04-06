@@ -21,16 +21,16 @@
 #define DEFAULT_GAME_WIDTH   48
 #define DEFAULT_GAME_HEIGHT  48
 #define NUM_CHANNELS 3
-#define OPTIMIZER "RMSprop"
-#define LEARNING_RATE 0.01f
+#define OPTIMIZER "none" //TODO
+#define LEARNING_RATE 0.0f //TODO
 #define REPLAY_MEMORY 10000
-#define BATCH_SIZE 32
+#define BATCH_SIZE 1 //TODO
 #define GAMMA 0.9f
 #define EPS_START 0.9f
 #define EPS_END 0.05f
 #define EPS_DECAY 200
-#define USE_LSTM true
-#define LSTM_SIZE 256
+#define USE_LSTM false //TODO (Optional)
+#define LSTM_SIZE 1 //TODO (Optional)
 #define ALLOW_RANDOM true
 #define DEBUG_DQN false
 
@@ -82,11 +82,11 @@ int main( int argc, char** argv )
 	}
 	
 	
-	// Create reinforcement learner agent in pyTorch
-	dqnAgent* agent = dqnAgent::Create(gameWidth, gameHeight, NUM_CHANNELS, NUM_ACTIONS, 
-								OPTIMIZER, LEARNING_RATE, REPLAY_MEMORY, BATCH_SIZE, 
-								GAMMA, EPS_START, EPS_END, EPS_DECAY, 
-								USE_LSTM, LSTM_SIZE, ALLOW_RANDOM, DEBUG_DQN);
+	/*
+	/ TODO - Create reinforcement learner agent in pyTorch
+	/
+	*/
+	dqnAgent* agent = None;
 	
 	if( !agent )
 	{
