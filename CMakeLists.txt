@@ -115,7 +115,6 @@ endif()
 
 
 add_subdirectory(gazebo)
-add_subdirectory(samples)
 add_subdirectory(tools)
 add_subdirectory(utils)
 
