@@ -163,7 +163,7 @@ bool ArmPlugin::createAgent()
 	/
 	*/
 	
-	agent = None;
+	agent = NULL;
 
 	if( !agent )
 	{
