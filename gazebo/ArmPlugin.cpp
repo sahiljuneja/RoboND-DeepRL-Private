@@ -1,3 +1,9 @@
+/* 
+ * Author - Dustin Franklin (Nvidia Jetson Developer)
+ * Modified by - Sahil Juneja, Kyle Stewart-Frantz
+ *
+ */
+
 #include "ArmPlugin.h"
 #include "PropPlugin.h"
 
@@ -15,31 +21,37 @@
 #define VELOCITY_MAX  0.2f
 
 // Define DQN API Settings
-#define INPUT_WIDTH   64
-#define INPUT_HEIGHT  64
+
 #define INPUT_CHANNELS 3
-#define OPTIMIZER "RMSprop"
-#define LEARNING_RATE 0.01f
-#define REPLAY_MEMORY 10000
-#define BATCH_SIZE 32
-#define GAMMA 0.9f
-#define EPS_START 0.9f
-#define EPS_END 0.05f
-#define EPS_DECAY 200
-#define USE_LSTM true
-#define LSTM_SIZE 256
 #define ALLOW_RANDOM true
 #define DEBUG_DQN false
+
+/*
+/ TODO - Tune the following hyperparameters
+/
+*/
+
+#define INPUT_WIDTH   512
+#define INPUT_HEIGHT  512
+#define OPTIMIZER "None"
+#define LEARNING_RATE 0.0f
+#define REPLAY_MEMORY 10000
+#define BATCH_SIZE 8
+#define USE_LSTM false
+#define LSTM_SIZE 32
+
+/*
+/ TODO - Define Reward Parameters
+/
+*/
+
+#define REWARD_WIN  0.0f
+#define REWARD_LOSS -0.0f
 
 // Define Object Names
 #define WORLD_NAME "arm_world"
 #define PROP_NAME  "tube"
 #define GRIP_NAME  "gripper_middle"
-
-// Define Reward Parameters
-#define REWARD_WIN  1.0f
-#define REWARD_LOSS -1.0f
-#define GAMMA_FALLOFF 0.35f
 
 // Define Collision Parameters
 #define COLLISION_FILTER "ground_plane::link::collision"
@@ -122,7 +134,7 @@ void ArmPlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr /*_sdf*/)
 	/
 	*/
 	
-	cameraSub = None;
+	//cameraSub = None;
 
 	// Create our node for collision detection
 	collisionNode->Init();
@@ -132,7 +144,7 @@ void ArmPlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr /*_sdf*/)
 	/
 	*/
 	
-	collisionSub = None;
+	//collisionSub = None;
 
 	// Listen to the update event. This event is broadcast every simulation iteration.
 	this->updateConnection = event::Events::ConnectWorldUpdateBegin(boost::bind(&ArmPlugin::OnUpdate, this, _1));
@@ -246,12 +258,11 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 		/ TODO - Check if there is collision between the arm and object, then issue learning reward
 		/
 		*/
-			
 		
-		if((strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0))		
-       
+		/*
+		
+		if (collisionCheck)
 		{
-
 			rewardHistory = None;
 
 			newReward  = None;
@@ -259,13 +270,8 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 
 			return;
 		}
-		else {
-			
-			// Give penalty for non correct collisions
-			rewardHistory = None;
-			newReward  = None;
-			endEpisode = None;
-		}
+		*/
+		
 	}
 }
 
@@ -313,7 +319,7 @@ bool ArmPlugin::updateAgent()
 	/
 	*/
 	
-	float velocity = 0.0;
+	float velocity = 0.0; // TODO - Set joint velocity based on whether action is even or add.
 
 	if( velocity < VELOCITY_MIN )
 		velocity = VELOCITY_MIN;
@@ -344,7 +350,7 @@ bool ArmPlugin::updateAgent()
 	/ TODO - Increase or decrease the joint position based on whether the action is even or add
 	/
 	*/
-	float joint = 0.0;
+	float joint = 0.0; // TODO - Set joint position based on whether action is even or add.
 
 	// limit the joint to the specified range
 	if( joint < JOINT_MIN )
@@ -559,50 +565,52 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 			return;
 		}
 
-						
+		// get the bounding box for the gripper		
 		const math::Box& gripBBox = gripper->GetBoundingBox();
 		const float groundContact = 0.05f;
-
-		if( gripBBox.min.z <= groundContact || gripBBox.max.z <= groundContact )
+		
+		/*
+		/ TODO - set appropriate Reward for robot hitting the ground.
+		/
+		*/
+		
+		
+		/*if(checkGroundContact)
 		{
-			
-			/*
-			/ TODO - set appropriate Reward for robot hitting the ground.
-			/
-			*/
-			
+						
 			if(DEBUG){printf("GROUND CONTACT, EOE\n");}
 
 			rewardHistory = None;
 			newReward     = None;
 			endEpisode    = None;
 		}
-		else
+		*/
+		
+		/*
+		/ TODO - Issue an interim reward based on the distance to the object
+		/
+		*/ 
+		
+		/*
+		if(!checkGroundContact)
 		{
-			const float distGoal = BoxDistance(gripBBox, propBBox); // compute the reward from distance to the goal
+			const float distGoal = 0; // compute the reward from distance to the goal
 
 			if(DEBUG){printf("distance('%s', '%s') = %f\n", gripper->GetName().c_str(), prop->model->GetName().c_str(), distGoal);}
 
 			
-			/*
-			/ TODO - Issue an interim reward based on the delta of the distance to the object
-			/
-			*/ 
 			if( episodeFrames > 1 )
 			{
 				const float distDelta  = lastGoalDistance - distGoal;
-				const float distThresh = 1.5f;		// maximum distance to the goal
-				const float epsilon    = 0.001f;		// minimum pos/neg change in position
-				const float movingAvg  = 0.9f;
 
 				// compute the smoothed moving average of the delta of the distance to the goal
 				avgGoalDelta  = 0.0;
-				rewardHistory = avgGoalDelta;
-				newReward     = true;	
+				rewardHistory = None;
+				newReward     = None;	
 			}
 
 			lastGoalDistance = distGoal;
-		}	
+		} */
 	}
 
 	// issue rewards and train DQN
